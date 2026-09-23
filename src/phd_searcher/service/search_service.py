@@ -19,6 +19,7 @@ from qdrant_client.models import (
     DatetimeRange,
     FieldCondition,
     Filter,
+    HasIdCondition,
     IsEmptyCondition,
     MatchAny,
     MatchValue,
@@ -34,6 +35,7 @@ from phd_searcher.engine.model_helper import ModelHelper
 from phd_searcher.engine.search_query import split_combined_query
 from phd_searcher.opportunity_kinds import normalize_opportunity_kind
 from phd_searcher.position_types import classify_position
+from phd_searcher.service.feedback_service import FeedbackService
 from phd_searcher.typedef.search import (
     InstitutionHit,
     SearchBody,
@@ -178,16 +180,22 @@ async def _euro_rates() -> dict[str, float]:
 
 class SearchService:
     @inject
-    def __init__(self, model: ModelHelper, qdrant: AsyncQdrantClient, config: QdrantConfig) -> None:
+    def __init__(self, model: ModelHelper, qdrant: AsyncQdrantClient, config: QdrantConfig,
+                 feedback: FeedbackService) -> None:
         self._model = model
         self._qdrant = qdrant
         self._collection = config.collection
+        self._feedback = feedback
 
     async def search(self, body: SearchBody) -> SearchResult:
         queries = normalized_retrieval_queries(body.query) if body.query else []
         vectors = await self._model.embed_queries(queries) if queries else []
         must: list[Condition] = []
         must_not: list[Condition] = []
+        feedback = await self._feedback.active_feedback()
+        reported_ids = sorted({f.position_id for f in feedback if f.reason != "confirmed_opportunity"})
+        if reported_ids and not body.include_reported:
+            must_not.append(HasIdCondition(has_id=reported_ids))
         # The vector collection can lag behind a fresh deadline/index cleanup.
         # Never expose an explicitly expired item; keep unknown deadlines as
         # useful, visibly uncertain leads.
@@ -343,6 +351,7 @@ class SearchService:
             hits.append(
                 SearchHit(
                     position_id=int(point.id),
+                    feedback=[f for f in feedback if f.position_id == int(point.id)],
                     score=point.score if isinstance(point, ScoredPoint) else None,
                     title=str(payload.get("title", "")),
                     university=str(payload.get("university", "")),

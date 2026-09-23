@@ -3,6 +3,21 @@ import pytest
 from phd_searcher.position_types import classify_position
 
 
+@pytest.mark.parametrize(("title", "kind"), [
+    ("Microscopist and Imaging Specialist (PhD level)", "research_staff"),
+    ("Research Engineer (PhD required)", "research_staff"),
+    ("Software developer with a PhD", "other"),
+    ("Postdoctoral scientist (PhD level)", "postdoc"),
+    ("PhD Student Position - Learning Lab", "phd"),
+])
+def test_doctorate_qualification_is_distinct_from_doctoral_training(title, kind):
+    assert classify_position(title) == kind
+
+
+def test_qualification_rule_preserves_explicit_operator_type():
+    assert classify_position("Imaging Specialist (PhD level)", explicit="phd") == "phd"
+
+
 @pytest.mark.parametrize(
     "title",
     [

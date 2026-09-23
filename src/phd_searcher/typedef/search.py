@@ -11,6 +11,7 @@ from phd_searcher.countries import country_code
 from phd_searcher.engine.search_query import split_combined_query
 from phd_searcher.opportunity_kinds import DEFAULT_OPPORTUNITY_KIND, OpportunityKind
 from phd_searcher.position_types import POSITION_TYPES
+from phd_searcher.typedef.feedback import PositionFeedbackView
 
 ScreeningStatus = Literal["pending", "eligible", "review", "rejected", "quarantine"]
 ManualScreeningStatus = Literal["eligible", "review", "rejected"]
@@ -24,6 +25,7 @@ class SearchBody(BaseModel):
     # Empty queries browse only explicitly selected institutions, without embeddings.
     query: str = Field(default="", max_length=500)
     mode: SearchMode = "verified_only"
+    include_reported: bool = False
     # Heuristic audit score, not a calibrated probability. ``None`` keeps all
     # results allowed by ``mode``; 0 is equivalent to fully verified only.
     max_uncertainty: int | None = Field(default=None, ge=0, le=100)
@@ -105,6 +107,7 @@ class SearchBody(BaseModel):
 
 class SearchHit(BaseModel):
     position_id: int
+    feedback: list[PositionFeedbackView] = Field(default_factory=list)
     # None for filtered institution browsing, where no embedding is computed.
     score: float | None
     title: str

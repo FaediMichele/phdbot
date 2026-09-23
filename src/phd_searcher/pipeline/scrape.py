@@ -20,6 +20,7 @@ from phd_searcher.countries import country_code
 from phd_searcher.database.models.listing_page import ListingPage
 from phd_searcher.database.models.position import Position
 from phd_searcher.database.models.university import University
+from phd_searcher.pipeline.listing_render import ListingRenderError, render_wait_options
 from phd_searcher.pipeline.normalize import (
     NormalizedPosition,
     normalize_item,
@@ -192,6 +193,8 @@ async def _fetch_page(
             status_code = result.redirected_status_code or result.status_code
             if status_code in {401, 403} or _is_permanent_source_denial(RuntimeError(message)):
                 raise PermanentSourceDenialError(message)
+            if config.wait_for and "wait" in message.lower():
+                raise ListingRenderError(message)
             raise RuntimeError(message)
         from phd_searcher.pipeline.source_validation import page_state
 
@@ -220,7 +223,7 @@ async def _fetch_page(
         # Crawl4AI conserva il testo "HTTP 429" ma non gli header: EURAXESS
         # necessita di un vero cooldown, non di tre retry ravvicinati.
         rate_limit_delay=_EURAXESS_RATE_LIMIT_COOLDOWN if is_euraxess else None,
-        non_retryable=(PermanentSourceDenialError,),
+        non_retryable=(PermanentSourceDenialError, ListingRenderError),
     )
 
 
@@ -630,6 +633,7 @@ async def run(
                     cache_mode=CacheMode.BYPASS,
                     check_robots_txt=True,
                     extraction_strategy=strategy,
+                    **render_wait_options(schema),
                 )
                 deferred_page, deferred_started_at = _deferred_source_cursor(
                     deferred_sources,

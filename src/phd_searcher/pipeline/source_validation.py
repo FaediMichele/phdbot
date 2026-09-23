@@ -90,3 +90,33 @@ def page_state(html: str, status: int | None = None) -> str | None:
 
 class SchemaDeferredError(Exception):
     """A recorded preflight disposition, not an LLM/transport failure."""
+
+
+def staff_directory_evidence(html: str) -> bool:
+    """Defer repeated contact profiles, never infer a vacancy verdict from names.
+
+    Require repeated office labels AND personal email evidence in their blocks.
+    A mixed board with recruitment links or structured jobs must be left alone.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    if '"JobPosting"' in html or any(
+        re.search(
+            r"\b(phd|postdoctoral|doctoral|researcher|professor|apply|vacancy|"
+            r"bewerben|dottorato|assegno|borsa)\b",
+            a.get_text(" ", strip=True), re.I,
+        )
+        for a in soup.find_all("a", href=True)
+    ):
+        return False
+    blocks: set[int] = set()
+    for label in soup.find_all(["b", "strong"]):
+        if _fold(label.get_text(" ", strip=True)) not in {
+            "main office laboratory", "office", "office location", "ufficio",
+        }:
+            continue
+        block = label.parent
+        if block is None:
+            continue
+        if re.search(r"[\w.+-]+@[\w.-]+\.[a-z]{2,}", str(block), re.I):
+            blocks.add(id(block))
+    return len(blocks) >= 3

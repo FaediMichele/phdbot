@@ -34,6 +34,11 @@ _NAMED_JOB_TITLE = re.compile(
     r"team leader|coordinator|manager|administrator|designer|analyst|scientist)\b",
     re.I,
 )
+_PHD_QUALIFICATION_TITLE = re.compile(
+    r"\bPh\.?D\.?\s*[- ]\s*level\b|\bPh\.?D\.?\s+(?:degree\s+)?required\b|"
+    r"\bwith\s+(?:a\s+)?Ph\.?D\.?\b",
+    re.I,
+)
 
 _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("postdoc", re.compile(r"\bpost[ -]?doc(?:toral)?\b|\bpostdottor", re.I)),
@@ -92,6 +97,7 @@ _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         re.compile(
             r"\bresearcher\b|\bresearch scientist\b|\bresearch engineer\b|\bresearch associate\b|"
             r"\bscientific officer\b|"
+            r"\bmicroscopist\b|\bimaging specialist\b|"
             r"\b(?:user\s+)?research officer\b|\bbioinformatician\b|"
             r"\b(?:biological|scientific|genomic) curator\b|"
             r"\b(?:genomics|bioinformatics|computational biology)"
@@ -109,7 +115,9 @@ def classify_position(title: str, description: str = "", explicit: str | None = 
         return explicit
     # Il titolo è più affidabile del testo pagina, che spesso include menu e
     # descrizioni di corsi non collegati al tipo di contratto della vacancy.
-    title_kind = next((kind for kind, pattern in _PATTERNS if pattern.search(title)), None)
+    # A named job requiring a doctorate is not a doctoral training place.
+    classified_title = _PHD_QUALIFICATION_TITLE.sub("", title) if _NAMED_JOB_TITLE.search(title) else title
+    title_kind = next((kind for kind, pattern in _PATTERNS if pattern.search(classified_title)), None)
     if title_kind == "research_fellowship" and _DOCTORAL_FELLOWSHIP_TITLE.match(title.strip()):
         return "phd"
     if title_kind:

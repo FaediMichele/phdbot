@@ -18,6 +18,8 @@ from phd_searcher.dependency.config_module import ConfigModule
 from phd_searcher.dependency.service_module import ServiceModule
 from phd_searcher.engine.model_helper import ModelHelper
 from phd_searcher.main import create_app
+from phd_searcher.service.feedback_service import FeedbackService
+from phd_searcher.typedef.feedback import PositionFeedbackView
 
 VECTOR_DIM = 4
 
@@ -68,7 +70,20 @@ def container(fake_model: FakeModelHelper, qdrant: AsyncQdrantClient) -> Injecto
         def provide_qdrant(self) -> AsyncQdrantClient:
             return qdrant
 
-    return Injector([ConfigModule(settings), FakeAIModule(), FakeQdrantModule(), ServiceModule()])
+    class FakeFeedbackService(FeedbackService):
+        def __init__(self) -> None:
+            pass
+
+        async def active_feedback(self) -> list[PositionFeedbackView]:
+            return []
+
+    class FakeFeedbackModule(Module):
+        @singleton
+        @provider
+        def provide_feedback(self) -> FeedbackService:
+            return FakeFeedbackService()
+
+    return Injector([ConfigModule(settings), FakeAIModule(), FakeQdrantModule(), ServiceModule(), FakeFeedbackModule()])
 
 
 @pytest.fixture

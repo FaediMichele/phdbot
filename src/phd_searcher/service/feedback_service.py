@@ -8,7 +8,7 @@ from hashlib import sha256
 from typing import cast
 
 from injector import inject
-from sqlalchemy import update
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from phd_searcher.database.models.listing_page import ListingPage
@@ -67,6 +67,15 @@ class FeedbackService:
             created_at=feedback.created_at,
             retracted_at=feedback.retracted_at,
         )
+
+    async def active_feedback(self) -> list[PositionFeedbackView]:
+        """Read current labels for exact-item search visibility; no index mutation."""
+        async with self._session_maker() as session:
+            rows = await session.scalars(
+                select(PositionFeedback).where(PositionFeedback.status == "open")
+                .order_by(PositionFeedback.id)
+            )
+            return [self._view(row) for row in rows]
 
     async def create(
         self,

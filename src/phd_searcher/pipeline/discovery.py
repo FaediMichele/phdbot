@@ -1,19 +1,21 @@
 """Stadio 2: per ogni ateneo pending, trova la pagina che elenca i bandi PhD.
 
 Strategia a imbuto, senza LLM fino alla scelta finale: link della homepage →
-sitemap.xml → un hop dentro le pagine "hub" (research/careers/postgraduate...).
+sitemap.xml → navigazione jobs/hub entro un budget fisso di quattro pagine.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+import re
 from datetime import UTC, datetime, timedelta
 from typing import cast
 from urllib.parse import urljoin, urlparse, urlsplit
 from xml.etree import ElementTree
 
 import httpx
+from bs4 import BeautifulSoup
 from crawl4ai import AsyncWebCrawler, CacheMode, CrawlerRunConfig
 from crawl4ai.models import CrawlResult
 from injector import Injector
@@ -34,12 +36,14 @@ from phd_searcher.pipeline.discovery_selection import DiscoverySelectionExhauste
 from phd_searcher.pipeline.progress import Progress
 from phd_searcher.pipeline.retry import retry_async
 from phd_searcher.pipeline.source_owners import SourceOwners
+from phd_searcher.pipeline.source_validation import page_state
 from phd_searcher.pipeline.urls import is_listing_page_url
 from phd_searcher.pipeline.workday import recruitment_referrer, workday_board
 
 # ponytail: lista keyword multilingua a mano; estendere se un paese resta scoperto
 _KEYWORDS = (
     "phd",
+    "job opportunit",
     "jobs",
     "careers",
     "emploi",
@@ -48,6 +52,8 @@ _KEYWORDS = (
     "vacanc",
     "position",
     "recruit",
+    "recrut",
+    "nous rejoindre",
     "dottorato",
     "bandi",
     "concorsi",
@@ -106,6 +112,10 @@ _HUB_KEYWORDS = (
     "werken",
 )
 _MAX_HUBS = 4
+_RECRUITMENT_HUB_KEYWORDS = (
+    "job", "career", "vacan", "recruit", "emploi", "stellen", "karriere",
+    "lavora", "bandi", "concorsi", "werken", "studentship", "recrut", "nous rejoindre",
+)
 _HUB_EXCLUDE = ("news", "event", "story", "press", "alumni")
 _SPONTANEOUS_KEYWORDS = (
     "spontaneous application",
@@ -119,6 +129,48 @@ _SPONTANEOUS_KEYWORDS = (
 _MAX_SITEMAPS = 4
 _MAX_SITEMAP_BYTES = 2_000_000
 _LOGGER = logging.getLogger(__name__)
+
+
+class DiscoverySourceUnavailableError(RuntimeError):
+    """Permanent root failure for this attempt, never a no-listing verdict."""
+
+
+def _root_identity(html: str, institution: str) -> bool:
+    def fold(value: str) -> str:
+        return " ".join(re.findall(r"\w+", value.casefold()))
+
+    expected = fold(institution)
+    if not expected:
+        return False
+    soup = BeautifulSoup(html, "html.parser")
+    labels = [node.get_text(" ", strip=True) for node in soup.select("title, h1")]
+    return any(expected == fold(part) for label in labels for part in re.split(r"[|\u2013\u2014]|\s-\s", label))
+
+
+async def _crawl_institution_root(
+    crawler: AsyncWebCrawler, config: CrawlerRunConfig, website: str, institution: str,
+) -> tuple[CrawlResult, str]:
+    result = await crawler.arun(website, config=config)
+    status = result.redirected_status_code or result.status_code
+    if status is not None and 400 <= status < 500 and status not in {404, 410, 429}:
+        raise DiscoverySourceUnavailableError(f"official entry page HTTP {status}: {website}")
+    if status is not None and (status >= 500 or status == 429):
+        raise RuntimeError(result.error_message or f"official entry page failed: HTTP {status}: {website}")
+    if page_state(result.html or "", status) == "unavailable":
+        parsed = urlsplit(website)
+        if parsed.path.strip("/") and parsed.hostname and not parsed.username and not parsed.password:
+            root = f"{parsed.scheme}://{parsed.netloc}/"
+            proof = await crawler.arun(root, config=config)
+            target = proof.redirected_url or root
+            proof_status = proof.redirected_status_code or proof.status_code
+            if (proof.success and proof_status is not None and 200 <= proof_status < 300
+                    and _same_site(target, root) and _root_identity(proof.html or "", institution)):
+                _LOGGER.info("discovery recovered obsolete registry path %s through identity-verified %s", website, target)
+                return proof, target
+        raise DiscoverySourceUnavailableError(f"official entry page unavailable: {website}; retry after source repair")
+    if not result.success:
+        raise RuntimeError(result.error_message or f"official entry page failed: {website}")
+    return result, result.redirected_url or website
 
 
 class _Link:
@@ -150,17 +202,18 @@ def _candidates(links: list[dict[str, str | None]], referrer: str = "") -> list[
 
 
 def _hub_links(links: list[dict[str, str | None]]) -> list[str]:
-    scored: list[tuple[int, str]] = []
+    scored: list[tuple[int, int, str]] = []
     for link in links:
         href = link.get("href") or ""
         haystack = f"{href} {link.get('text') or ''}".lower()
         if not href.startswith("http") or not is_listing_page_url(href) or any(x in haystack for x in _HUB_EXCLUDE):
             continue
-        if any(k in haystack for k in _HUB_KEYWORDS):
-            scored.append((len(href), href))
-    scored.sort()  # URL corti prima: più probabile siano radici di sezione, non pagine foglia
+        if any(k in haystack for k in (*_HUB_KEYWORDS, *_RECRUITMENT_HUB_KEYWORDS)):
+            priority = 0 if any(k in haystack for k in _RECRUITMENT_HUB_KEYWORDS) else 1
+            scored.append((priority, len(href), href))
+    scored.sort()  # Recruitment before short generic research/navigation pages.
     out: list[str] = []
-    for _, href in scored:
+    for _, _, href in scored:
         if href not in out:
             out.append(href)
     return out[:_MAX_HUBS]
@@ -263,17 +316,40 @@ def _public_sitemap_url(url: str, website_url: str) -> bool:
 async def _collect_candidates(
     crawler: AsyncWebCrawler, config: CrawlerRunConfig, website_url: str, links: list[dict[str, str | None]]
 ) -> list[_Link]:
-    """Unione dei candidati da homepage, sitemap e un hop nelle pagine hub.
+    """Unione dei candidati da homepage, sitemap e navigazione jobs limitata.
 
     Tutti i livelli sempre: i candidati della sola homepage sono spesso pagine
     informative che l'LLM scarta, mentre il listing vero è un hop più in là.
     """
     groups = [_candidates(links, website_url), await _sitemap_candidates(website_url)]
-    for hub in _hub_links(links):
-        result = await crawler.arun(hub, config=config)
+    pending = _hub_links(links)
+    visited = {website_url}
+    fetched = 0
+    while pending and fetched < _MAX_HUBS:
+        hub = pending.pop(0)
+        if hub in visited:
+            continue
+        visited.add(hub)
+        fetched += 1
+        try:
+            result = await crawler.arun(hub, config=config)
+        except Exception as exc:
+            # One broken optional hub must not discard successful siblings or
+            # replay the entire four-fetch budget in the outer retry layer.
+            _LOGGER.warning("discovery hub unavailable %s: %s", hub, exc)
+            continue
         if result.success:
+            visited.add(result.redirected_url or hub)
             hub_links = list(result.links.get("internal", [])) + list(result.links.get("external", []))
             groups.append(_candidates(hub_links, result.redirected_url or hub))
+            # Follow the jobs subsection/linked ATS using the SAME four-page
+            # budget, including an external board explicitly linked by the hub.
+            recruitment_links = [link for link in hub_links if any(
+                key in f"{link.get('href') or ''} {link.get('text') or ''}".lower()
+                for key in _RECRUITMENT_HUB_KEYWORDS
+            )]
+            nested = [url for url in _hub_links(recruitment_links) if url not in visited]
+            pending = list(dict.fromkeys([*nested, *pending]))
     merged = _merge_candidate_groups(groups)
     for candidate in merged:
         # A duplicate link from a homepage/sitemap must not erase stronger
@@ -436,18 +512,20 @@ async def run(
                     # normal discovery and carries a validated deterministic schema.
                     await seed_curated_sources(session, uni)
 
-                    async def crawl_root(website_url: str = uni.website_url) -> CrawlResult:
-                        result = await crawler.arun(website_url, config=crawl_config)
-                        if not result.success:
-                            raise RuntimeError(result.error_message or "crawl failed")
-                        return result
+                    async def crawl_root(website_url: str = uni.website_url, institution: str = uni.name) -> tuple[CrawlResult, str]:
+                        return await _crawl_institution_root(crawler, crawl_config, website_url, institution)
 
-                    result = await retry_async(progress, f"discovery:{uni.id}:root", crawl_root)
+                    result, root_url = await retry_async(
+                        progress, f"discovery:{uni.id}:root", crawl_root,
+                        non_retryable=(DiscoverySourceUnavailableError,),
+                    )
+                    if root_url != uni.website_url:
+                        await progress.save_checkpoint(root_requested_url=uni.website_url, root_observed_url=root_url)
                     links = list(result.links.get("internal", [])) + list(result.links.get("external", []))
                     uni.spontaneous_application_url = _spontaneous_application(links)
 
                     async def collect_current_candidates(
-                        website_url: str = uni.website_url,
+                        website_url: str = root_url,
                         current_links: list[dict[str, str | None]] = links,
                     ) -> list[_Link]:
                         return await _collect_candidates(

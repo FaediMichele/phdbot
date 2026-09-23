@@ -32,6 +32,25 @@ def test_parse_deadline_unparseable_is_none():
     assert parse_deadline(None) is None
 
 
+def test_closing_date_survives_storage_and_reparse_beside_start_date():
+    text = ('Application closing date: September 30th, 2026 '
+            'Expected position starting date: January 1st, 2027 Requirements: PhD')
+    raw, deadline = extract_deadline(text)
+    assert deadline == date(2026, 9, 30)
+    assert raw is not None
+    assert '2027' not in raw
+    assert parse_deadline(raw) == deadline
+    # Previously stored contaminated snippets must also parse consistently.
+    assert parse_deadline(text) == deadline
+
+
+def test_application_range_excludes_following_interview_metadata():
+    text = ('Applications between 1 September 2026 and 30 September 2026. '
+            'Interview date: 15 October 2026')
+    assert extract_deadline(text)[1] == date(2026, 9, 30)
+    assert parse_deadline(text) == date(2026, 9, 30)
+
+
 def test_null_application_deadline_does_not_borrow_the_start_date():
     contaminated = "Application Deadline** None specified **Start Date** 21 September 2026"
 

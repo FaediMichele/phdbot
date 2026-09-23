@@ -22,7 +22,7 @@ from typing import TypedDict
 from urllib.parse import unquote, urlsplit
 
 from injector import Injector
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, case, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from phd_searcher.database.models.listing_page import ListingPage
@@ -674,7 +674,17 @@ async def run(
                     ),
                 ),
             )
-            .order_by(Position.listing_page_id.asc().nulls_last(), Position.id)
+            # A small source budget must serve newly collected evidence before
+            # rechecking old aggregators merely because their IDs are smaller.
+            # Keep every source contiguous for groupby and preserve Resume keys.
+            .order_by(
+                case((and_(
+                    ListingPage.id.is_not(None),
+                    or_(ListingPage.quality_checked_at.is_(None),
+                        ListingPage.last_scraped_at > ListingPage.quality_checked_at),
+                ), 0), else_=1),
+                Position.listing_page_id.asc().nulls_last(), Position.id,
+            )
         )
         if name_like:
             pattern = f"%{name_like}%"

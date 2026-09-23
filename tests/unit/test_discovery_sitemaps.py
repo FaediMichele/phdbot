@@ -1,3 +1,6 @@
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
 import httpx
 import pytest
 
@@ -135,8 +138,63 @@ def test_plain_jobs_and_careers_labels_are_not_lost_before_selection():
     links = [
         {"href": "https://example.edu/openings", "text": "Jobs"},
         {"href": "https://example.edu/work", "text": "Careers"},
+        {"href": "https://example.edu/?page_id=3435", "text": "Job Opportunities"},
+        {"href": "https://example.edu/membres-fondateurs/", "text": "Nous rejoindre"},
     ]
-    assert len(discovery._candidates(links)) == 2
+    assert len(discovery._candidates(links)) == len(links)
+
+
+def test_recruitment_is_not_crowded_out_by_short_research_hubs():
+    links = [{"href": f"https://example.edu/research/{n}", "text": "Research"} for n in range(6)]
+    jobs = "https://example.edu/about-us/work-with-us/jobs-and-careers"
+    links.append({"href": jobs, "text": "Jobs"})
+    assert discovery._hub_links(links)[0] == jobs
+    assert len(discovery._hub_links(links)) == 4
+
+
+async def test_jobs_subsection_and_external_board_share_four_fetch_budget(monkeypatch):
+    root = "https://example.edu/"
+    career = root + "careers"
+    jobs = root + "careers/jobs"
+    external = "https://employer.ats.example/jobs"
+    vacancy = external + "/phd-123"
+    responses = {
+        career: [{"href": jobs, "text": "Vacancies"}],
+        jobs: [{"href": external, "text": "Jobs portal"}],
+        external: [{"href": vacancy, "text": "PhD position"}],
+    }
+    requested = []
+
+    async def fetch(url, **kwargs):
+        requested.append(url)
+        return SimpleNamespace(success=True, redirected_url=None, links={"internal": responses.get(url, [])})
+
+    monkeypatch.setattr(discovery, "_sitemap_candidates", AsyncMock(return_value=[]))
+    crawler = SimpleNamespace(arun=fetch)
+    candidates = await discovery._collect_candidates(crawler, None, root, [{"href": career, "text": "Careers"}])
+    assert requested[:3] == [career, jobs, external]
+    assert len(requested) <= 4
+    assert any(c.href == vacancy and c.referrer == external for c in candidates)
+
+
+async def test_failed_optional_hub_preserves_other_candidates(monkeypatch):
+    root = "https://example.edu/"
+    calls = []
+
+    async def fetch(url, **kwargs):
+        calls.append(url)
+        if url.endswith("jobs"):
+            raise RuntimeError("temporarily unavailable")
+        return SimpleNamespace(success=True, redirected_url=None, links={"external": [
+            {"href": "https://ats.example/phd", "text": "Doctoral positions"},
+        ]})
+
+    monkeypatch.setattr(discovery, "_sitemap_candidates", AsyncMock(return_value=[]))
+    result = await discovery._collect_candidates(SimpleNamespace(arun=fetch), None, root, [
+        {"href": root + "jobs", "text": "Jobs"}, {"href": root + "research", "text": "Research"},
+    ])
+    assert len(calls) == 2
+    assert any(c.href == "https://ats.example/phd" for c in result)
 
 
 @pytest.mark.parametrize(("destination", "count"), [("/wp-sitemap.xml", 1), ("https://evil.example/map.xml", 0)])

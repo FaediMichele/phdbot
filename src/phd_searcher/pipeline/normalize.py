@@ -61,6 +61,23 @@ _NULL_DEADLINE_RE = re.compile(
     r"(?:none(?:\s+specified)?|not\s+specified|n\s*/?\s*a|no\s+deadline)\b",
     re.IGNORECASE,
 )
+_OTHER_DATE_LABEL_RE = re.compile(
+    r"\b(?:expected\s+)?(?:(?:position|project|contract|employment)\s+)?"
+    r"(?:start(?:ing)?|commencement|interview|publication)\s+date\b",
+    re.IGNORECASE,
+)
+
+
+def _deadline_clause(raw: str) -> str:
+    """Keep a neighbouring metadata label out of stored deadline evidence."""
+    deadline = _DEADLINE_CONTEXT_RE.search(raw)
+    if deadline:
+        boundary = _OTHER_DATE_LABEL_RE.search(raw, deadline.start())
+        if boundary:
+            return raw[:boundary.start()].rstrip(" |;.,\n")
+    return raw
+
+
 _AMOUNT_RE = re.compile(r"(?<!\w)\d[\d\s.,]*(?!\w)")
 _ECB_CURRENCY_CODES = (
     "EUR",
@@ -217,7 +234,7 @@ def parse_deadline(raw: str | None) -> date | None:
     # application deadline.  Never borrow a neighbouring start/project date.
     if raw and _NULL_DEADLINE_RE.search(raw):
         return None
-    dates = parse_dates(raw)
+    dates = parse_dates(_deadline_clause(raw) if raw else raw)
     return max(dates, default=None)
 
 
@@ -231,7 +248,7 @@ def extract_deadline(text: str) -> tuple[str | None, date | None]:
     compact = re.sub(r"\s+", " ", text).strip()
     candidates: list[tuple[date, str]] = []
     for match in _DEADLINE_CONTEXT_RE.finditer(compact):
-        snippet = match.group().strip()
+        snippet = _deadline_clause(match.group().strip())
         if _NULL_DEADLINE_RE.search(snippet):
             continue
         dates = parse_dates(snippet)

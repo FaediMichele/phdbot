@@ -23,13 +23,19 @@ from phd_searcher.config import Settings
 from phd_searcher.database.models.listing_page import ListingPage
 from phd_searcher.database.models.university import University
 from phd_searcher.pipeline.discovery import _same_site
+from phd_searcher.pipeline.listing_render import ListingRenderError, listing_render_selector, render_wait_options
 from phd_searcher.pipeline.progress import Progress
 from phd_searcher.pipeline.retry import retry_async
 from phd_searcher.pipeline.schema_quality import (
     repair_base_anchor_url_schema,
     schema_quality_issues,
 )
-from phd_searcher.pipeline.source_validation import SchemaDeferredError, employer_evidence, page_state
+from phd_searcher.pipeline.source_validation import (
+    SchemaDeferredError,
+    employer_evidence,
+    page_state,
+    staff_directory_evidence,
+)
 from phd_searcher.pipeline.urls import is_listing_page_url
 from phd_searcher.pipeline.workday import linked_workday_board, recruitment_referrer, workday_board
 
@@ -129,6 +135,7 @@ def _validated_reusable_schema(
     """Return the first cached schema that passes the normal target-page gate."""
     for raw_schema in schemas:
         schema = repair_base_anchor_url_schema(raw_schema)
+        schema.pop("render_wait_for", None)  # Render hints belong to the observed page.
         if schema_quality_issues(schema):
             continue
         try:
@@ -383,6 +390,9 @@ async def run(
                 ListingPage.schema_status.in_(("missing", "stale", "failed")),
                 and_(ListingPage.schema_status.in_(("empty", "unavailable")),
                      ListingPage.quality_checked_at < datetime.now(UTC).replace(tzinfo=None) - timedelta(days=7)),
+                and_(ListingPage.schema_status == "deferred",
+                     ListingPage.quality_reason == "source_preflight:staff_directory",
+                     ListingPage.quality_checked_at < datetime.now(UTC).replace(tzinfo=None) - timedelta(days=7)),
             ))
             .order_by(
                 case((ListingPage.kind == "aggregator", 0), else_=1),
@@ -439,10 +449,21 @@ async def run(
                         return result
 
                     result = await retry_async(progress, f"schema:{page.id}:crawl", crawl_listing)
+                    render_selector = listing_render_selector(result.html or "")
+                    if render_selector:
+                        # One bounded observation before any model work. A timeout
+                        # is a technical failure, never an empty-board verdict.
+                        result = await crawler.arun(page.url, config=crawl_config.clone(
+                            **render_wait_options({"render_wait_for": render_selector}),
+                        ))
+                        if not result.success or not result.html:
+                            raise ListingRenderError(result.error_message or "dynamic listing did not render")
                     target = result.redirected_url or page.url
                     source_html = result.html or ""
                     state = page_state(source_html, result.redirected_status_code or result.status_code)
                     reason = f"source_preflight:{state}" if state else ""
+                    if state is None and staff_directory_evidence(source_html):
+                        state, reason = "deferred", "source_preflight:staff_directory"
                     if (state != "unavailable" and uni is not None and page.source != "seed"
                         and not _same_site(target, uni.website_url) and not employer_evidence(source_html, uni.name)):
                         state, reason = "deferred", "source_preflight:ownership_unverified"
@@ -505,6 +526,8 @@ async def run(
                     page.extraction_schema = schema
                     page.schema_status = "ok"
                     _remember_schema(reusable_schemas, cache_key, schema)
+                    if render_selector:
+                        page.extraction_schema = {**schema, "render_wait_for": render_selector}
                     generated += 1
                 except (SchemaDeferredError, _SchemaPreparedError):
                     pass
@@ -516,6 +539,7 @@ async def run(
                     # eseguite scritture DB. Un rollback scadrebbe tutte le righe ORM
                     # caricate e il successivo accesso a `page` causerebbe MissingGreenlet.
                     page.schema_status = "failed"
+                    await progress.save_checkpoint(last_error=str(exc)[:2000], failed_listing_page_id=page.id)
                 await session.commit()
                 processed += 1
                 await progress.save_checkpoint(

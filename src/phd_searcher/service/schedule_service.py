@@ -17,6 +17,7 @@ from sqlalchemy.sql import Select
 from phd_searcher.database.models.macro import MacroRun, SavedMacro
 from phd_searcher.database.models.pipeline_run import PipelineRun
 from phd_searcher.database.models.scheduled_job import ScheduledJob
+from phd_searcher.database.models.university import University
 from phd_searcher.pipeline.runner import STAGES, PipelineError, PipelineRunner
 from phd_searcher.service.macro_service import MacroService
 from phd_searcher.typedef.pipeline import PipelineStartBody
@@ -277,6 +278,17 @@ class ScheduleService:
 
         if target == "pipeline":
             body = PipelineStartBody.model_validate(payload)
+            expansion_id = payload.get("expansion_institution_id")
+            if expansion_id is not None:
+                # Name-scoped pipeline jobs must remain unambiguous even if the
+                # catalogue changed while this job waited or before a retry.
+                async with self._session_maker() as session:
+                    identifiers = (await session.scalars(select(University.id).where(
+                        University.name.ilike(f"%{body.name}%"),
+                    ))).all() if body.name else []
+                if list(identifiers) != [expansion_id]:
+                    await self._fail(job_id, "catalog expansion scope changed; inspect institution before retry")
+                    return
             stages = [name for name in STAGES if body.stages is None or name in body.stages]
             limits = body.limits.model_dump(exclude_none=True, by_alias=True) if body.limits else {}
             params: dict[str, object] = {

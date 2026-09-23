@@ -301,6 +301,9 @@ def _remove_page_chrome(root: Tag | BeautifulSoup) -> None:
     ):
         node.decompose()
     for node in list(root.find_all(True)):
+        # Decomposing a parent also destroys descendants already in this list.
+        if node.decomposed:
+            continue
         attributes = " ".join(
             [
                 str(node.get("id") or ""),
