@@ -222,3 +222,19 @@ def test_admissions_project_list_is_a_candidate_but_arbitrary_projects_are_not()
         {"href": "https://example.edu/undergraduate/course-projects/", "text": "Past projects"},
     ]
     assert [c.href for c in discovery._candidates(links)] == [links[0]["href"]]
+
+
+async def test_foundation_scholarship_hub_reaches_linked_application_board(monkeypatch):
+    root = "https://foundation.example/"
+    hub = root + "scholarships/"
+    board = "https://funding.example/apply/phd-scholarships"
+    crawler = SimpleNamespace(arun=AsyncMock(return_value=SimpleNamespace(
+        success=True, redirected_url=None,
+        links={"external": [{"href": board, "text": "Doctoral applications"}]},
+    )))
+    monkeypatch.setattr(discovery, "_sitemap_candidates", AsyncMock(return_value=[]))
+    candidates = await discovery._collect_candidates(
+        crawler, None, root, [{"href": hub, "text": "Scholarships Available"}],
+    )
+    assert any(c.href == board and c.referrer == hub for c in candidates)
+    assert crawler.arun.await_count <= 4

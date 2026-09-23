@@ -74,3 +74,13 @@ def test_duplicate_hubs_do_not_consume_the_candidate_budget():
 def test_studentships_are_candidates_even_without_phd_in_the_link():
     links = [{"href": "https://uni.example/medicine/studentships", "text": "Funded projects"}]
     assert len(_candidates(links)) == 1
+
+
+def test_foundation_scholarship_board_is_a_candidate_without_phd_in_label():
+    links = [
+        {"href": "https://foundation.example/grants-offered/scholarships/", "text": "Scholarships Available"},
+        {"href": "https://foundation.example/forms/", "text": "Scholarship application forms"},
+        {"href": "https://foundation.example/scholarships/terms.pdf", "text": "Terms"},
+        {"href": "https://foundation.example/about/", "text": "About the foundation"},
+    ]
+    assert [candidate.href for candidate in _candidates(links)] == [links[0]["href"], links[1]["href"]]
