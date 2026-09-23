@@ -85,3 +85,23 @@ gate and full metadata synchronization. All checks remain. A same-snapshot compa
 returned identical metadata for10,024 rows:41.40s synchronous versus40.64s cooperative,
 with a maximum observed event-loop scheduling gap0.932s. This improves responsiveness,
 not total compute.978 tests/Ruff/mypy pass; no claim of live API latency yet.
+
+
+Foundation follow-up: the English `scholarship` keyword was absent from discovery
+candidate/hub routing. A same-HTML replay added the actual Honor Frost scholarship
+board; run141 then discovered it as source8073. That page contains recurring schemes
+and an expired March2026 targeted call, so discovery alone does not establish current
+eligibility. Its first schema attempt cycle failed with missing title/description
+coverage; preserve that error for repair rather than replaying the four-call cycle.
+The expanded selection also included scholarship-recipient archive pages: these are
+not counted as opportunities. Run139's ten student names and run140's single generic
+vacancies heading yielded zero indexed opportunities.
+
+Heading-only recruitment boards now defer as `source_preflight:missing_content`,
+not as a claim that no jobs exist. The guard runs after bounded rendering and abstains
+on actual role text, links, structured jobs, media, forms or embedded application boards.
+It preserves evidence in mislabelled navigation regions. Missing-content holds become
+eligible for schema recheck after seven days. An isolated restored-DB test used saved
+KMI HTML, asserted zero model calls, skipped immediate retry, retried at eight days,
+and rolled back the full transaction.994 unit tests, Ruff and mypy passed. Deployment
+and exact source8072 disposition must be checked in CURRENT_STATE before claiming live.

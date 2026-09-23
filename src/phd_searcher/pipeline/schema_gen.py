@@ -33,6 +33,7 @@ from phd_searcher.pipeline.schema_quality import (
 from phd_searcher.pipeline.source_validation import (
     SchemaDeferredError,
     employer_evidence,
+    listing_body_missing,
     page_state,
     staff_directory_evidence,
 )
@@ -391,7 +392,7 @@ async def run(
                 and_(ListingPage.schema_status.in_(("empty", "unavailable")),
                      ListingPage.quality_checked_at < datetime.now(UTC).replace(tzinfo=None) - timedelta(days=7)),
                 and_(ListingPage.schema_status == "deferred",
-                     ListingPage.quality_reason == "source_preflight:staff_directory",
+                     ListingPage.quality_reason.in_(("source_preflight:staff_directory", "source_preflight:missing_content")),
                      ListingPage.quality_checked_at < datetime.now(UTC).replace(tzinfo=None) - timedelta(days=7)),
             ))
             .order_by(
@@ -462,6 +463,8 @@ async def run(
                     source_html = result.html or ""
                     state = page_state(source_html, result.redirected_status_code or result.status_code)
                     reason = f"source_preflight:{state}" if state else ""
+                    if state is None and listing_body_missing(source_html):
+                        state, reason = "deferred", "source_preflight:missing_content"
                     if state is None and staff_directory_evidence(source_html):
                         state, reason = "deferred", "source_preflight:staff_directory"
                     if (state != "unavailable" and uni is not None and page.source != "seed"
