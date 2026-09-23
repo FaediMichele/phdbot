@@ -23,7 +23,8 @@ REGISTRY_BASIS = "ror:active-research-registry"
 
 
 def _candidate_statement(country: str | None, query: str | None, limit: int) -> Select[tuple[University]]:
-    # Round-robin countries, with a stable registry-ID hash within each country.
+    # Rotate countries across batches using durable admission history, with a
+    # stable registry-ID hash within each country. Cancelled jobs do not count.
     # This is an exploration order, not an estimated probability of hiring.
     has_source = select(ListingPage.id).where(ListingPage.university_id == University.id).exists()
     stmt = select(
@@ -44,9 +45,17 @@ def _candidate_statement(country: str | None, query: str | None, limit: int) -> 
     if query:
         stmt = stmt.where(University.name.icontains(query, autoescape=True))
     ranked = stmt.subquery()
+    last_admission = (
+        select(University.country, func.max(ScheduledJob.created_at).label("last_admitted_at"))
+        .join(ScheduledJob, ScheduledJob.payload["expansion_institution_id"].as_integer() == University.id)
+        .where(ScheduledJob.target == "pipeline", ScheduledJob.state != "cancelled")
+        .group_by(University.country).subquery()
+    )
     return (
         select(University).join(ranked, University.id == ranked.c.id)
-        .order_by(ranked.c.country_rank, University.country, University.id).limit(limit)
+        .outerjoin(last_admission, last_admission.c.country == University.country)
+        .order_by(ranked.c.country_rank, last_admission.c.last_admitted_at.asc().nulls_first(),
+                  University.country, University.id).limit(limit)
     )
 
 

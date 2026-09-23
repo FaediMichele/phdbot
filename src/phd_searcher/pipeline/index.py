@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time
 from typing import Any, Literal, cast
@@ -138,6 +140,19 @@ class ProvisionalGateDecision:
 
     assessment: ProvisionalAssessment | None
     reason: str
+
+
+async def _cooperative_rows[T](rows: Iterable[T]) -> AsyncIterator[T]:
+    """Let API/control tasks run between small batches of synchronous gates.
+
+    Every row still receives the same checks. A scoped index can reconcile
+    thousands of existing provisional records, so network awaits alone are
+    insufficient to keep the shared API event loop responsive.
+    """
+    for offset, row in enumerate(rows):
+        if offset % 16 == 0:
+            await asyncio.sleep(0)
+        yield row
 
 
 def _checkpoint_int(value: object) -> int:
@@ -889,7 +904,7 @@ async def _sync_opportunity_kind_payload(
         ],
         list[int | str],
     ] = {}
-    for position, listing_page in indexed_rows:
+    async for position, listing_page in _cooperative_rows(indexed_rows):
         verification = _verification_metadata(
             position,
             current_day,
@@ -1179,7 +1194,7 @@ async def run(
         provisional_indexed = (
             await session.execute(_provisional_indexed_stmt(today))
         ).all()
-        for position, listing_page in provisional_indexed:
+        async for position, listing_page in _cooperative_rows(provisional_indexed):
             if _verification_metadata(
                 position,
                 listing_page=listing_page,
@@ -1232,7 +1247,7 @@ async def run(
         candidate_rows = (await session.execute(stmt)).all()
         rows = [
             row
-            for row in candidate_rows
+            async for row in _cooperative_rows(candidate_rows)
             if _verification_metadata(
                 row[0],
                 today,

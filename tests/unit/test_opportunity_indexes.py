@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from datetime import UTC, date, datetime
+from itertools import pairwise
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -26,6 +28,7 @@ from phd_searcher.opportunity_kinds import (
 )
 from phd_searcher.pipeline.family_feedback import FamilyFeedbackSignal
 from phd_searcher.pipeline.index import (
+    _cooperative_rows,
     _embed_and_upsert,
     _family_payload,
     _invalidate_missing_collection,
@@ -1084,3 +1087,25 @@ def test_spontaneous_opportunities_feed_institutions_without_counting_as_positio
     assert by_name["Independent Institute"]["kind"] == "institution"
     assert by_name["Independent Institute"]["active_positions"] == 0
     assert by_name["Independent Institute"]["spontaneous_application_url"] == ("https://opportunity.example/15")
+
+
+async def test_index_gate_traversal_services_other_tasks_without_dropping_or_reordering_rows():
+    observed = []
+    checkpoints = []
+    finished = asyncio.Event()
+
+    async def control_request():
+        while not finished.is_set():
+            checkpoints.append(len(observed))
+            await asyncio.sleep(0)
+
+    control = asyncio.create_task(control_request())
+    try:
+        async for row in _cooperative_rows(range(100)):
+            observed.append(row)
+    finally:
+        finished.set()
+        await control
+    assert observed == list(range(100))
+    assert any(0 < count < 100 for count in checkpoints)
+    assert max(b - a for a, b in pairwise(checkpoints)) <= 16

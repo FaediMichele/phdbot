@@ -62,3 +62,26 @@ or automatic repair of every failed source. GO FAIR and Pathliv were previewed b
 not activated in this canary. Pathliv's recruitment page exposes template text;
 no opportunity is inferred from that alone. Existing IMBA403 and FORTH certificate
 issues remain separate technical work, without access-control/TLS bypasses.
+
+## Follow-up — 24 September
+
+Small repeated preview batches now rotate countries using the last durable expansion
+admission per country, before falling back to alphabetical order. Cancelled jobs do
+not advance rotation; the stable registry hash and within-batch country diversity
+remain. An isolated restored-database transaction exercised44 countries before any
+repeat, checked cancellation and explicit country filters, and rolled back its fixtures.
+977 unit tests, Ruff and mypy passed again before deployment. This changes candidate
+ordering only; it does not introduce automatic recurring activation.
+
+The next automatic cohort (Albanian Academy11350, Austrian IOEW19181, Bijeljina12608)
+produced no sources in runs136–138. This is a discovery outcome, not proof of no
+vacancies. A direct-page audit found IOEW serves a language-selection splash with
+image-only links; that navigation gap is deferred separately. Saved HTML is local.
+
+Scoped indexing still revalidates all existing provisional records. A read-only
+profile located51.2s in10,024 synchronous gate evaluations (profiling overhead included).
+Cooperative traversal now yields between16 rows in the existing-index gate, candidate
+gate and full metadata synchronization. All checks remain. A same-snapshot comparison
+returned identical metadata for10,024 rows:41.40s synchronous versus40.64s cooperative,
+with a maximum observed event-loop scheduling gap0.932s. This improves responsiveness,
+not total compute.978 tests/Ruff/mypy pass; no claim of live API latency yet.
