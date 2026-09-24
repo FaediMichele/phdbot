@@ -105,3 +105,12 @@ eligible for schema recheck after seven days. An isolated restored-DB test used 
 KMI HTML, asserted zero model calls, skipped immediate retry, retried at eight days,
 and rolled back the full transaction.994 unit tests, Ruff and mypy passed. Deployment
 and exact source8072 disposition must be checked in CURRENT_STATE before claiming live.
+
+
+Run141 completed with index4, but audit rejected that count as useful output: two
+named award-recipient biographies and two scholar navigation categories. Exact-item
+feedback7–10 hides them in ordinary search (live verification0 default/4 inspection),
+without a domain/family or neighbouring-deadline verdict. Scholarship source8073 is
+still failed; archive sources8074/8076 were selected incorrectly. These remain repair
+work, not evidence that the foundation has no funding. Missing-content protection is
+now deployed and source8072 held reversibly; all its records were preserved.
