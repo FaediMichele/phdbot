@@ -211,3 +211,18 @@ previously yielded a false April2027 deadline. Explicit start-date asides are no
 excluded; the yearless detail abstains, while the board's fully dated October2026
 window remains parseable. No year is borrowed.1036 tests/Ruff/mypy127files pass.
 Live collection of English8085 is still required before claiming useful new results.
+
+Run149/schedule37 acquired English ATS8085: schema1/scrape1/quality1/index1.
+Position103951 became a provisional research_staff lead, with deadline2026-10-31
+and open_status/details uncertainty. The generated schema chose the Apply-now login
+URL and no description. The public title link was present in the same downloaded
+HTML. Scrape now repairs only recognized Umantis application-login URLs when an
+observed detail anchor matches vacancy ID, language, exact normalized title and host.
+No guessed URL, extra fetch or schema generation;1043 tests/Ruff/mypy pass.
+
+For this existing record, an audited one-row canonical-URL repair preserves103951,
+first-seen data and verdict rather than inserting a second copy. Current board HTML
+was fetched to verify the exact replacement and absence of a conflicting DB URL;
+before-values are in umantis-detail-refresh.json. Schedule38 refreshes scrape/quality/
+evidence/enrich/index without discovery/schema or deep review. Final evidence/search
+verification is still pending in CURRENT_STATE; do not count the refresh as a new lead.
