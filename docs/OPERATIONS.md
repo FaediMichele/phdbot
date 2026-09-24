@@ -90,7 +90,8 @@ until a future audited feedback policy is explicitly implemented.
 Coverage has an **Explore research institutions** panel. Preview is read-only:
 it selects up to five European research entities still `catalogued`, without
 known listing sources. Optional country/name filters narrow the cohort. Ordering
-balances countries with a stable registry-ID hash; it is not a hiring prediction.
+balances countries within a batch and rotates them using durable admission history
+between batches, with a stable registry-ID hash. It is not a hiring prediction.
 
 **Activate & schedule selected** creates one durable pipeline job per institution:
 discovery -> schema -> scrape -> quality -> index. Defaults are one discovery,
@@ -115,6 +116,19 @@ sources should use a scoped collection run instead of rediscovery.
 Each institution publishes before the next institution finishes. Source failures
 stay diagnosable; this is not yet per-source publication within a run, adaptive
 scrape cadence, registry-release monitoring, or a universal autonomous repair queue.
+
+Heading-only recruitment boards defer as `source_preflight:missing_content` after
+rendering, rather than generating a schema from the page title. These holds become
+eligible for schema recheck after seven days; they do not establish absence of jobs.
+Concrete role text, embedded boards and application links prevent this shortcut.
+
+An audited funding adapter currently covers Honor Frost's scholarship page. It
+revalidates degree tabs and separate offer sections on each fetch. Recurring dates
+remain yearless and targeted deadlines stay with their own offer; changed layouts
+fail visibly. The degree is retained in the title and evidence, while grants use
+`research_fellowship`: university admission is a separate application. Do not count
+recipient biographies or scholar-navigation categories as opportunities. See
+[the measured expansion report](EXPANSION_CANARY_20260923.md) for evidence and limits.
 
 - Schedule times entered by the GUI are interpreted in `Europe/Rome` and
   persisted in UTC.
