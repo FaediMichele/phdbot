@@ -84,3 +84,28 @@ def test_foundation_scholarship_board_is_a_candidate_without_phd_in_label():
         {"href": "https://foundation.example/about/", "text": "About the foundation"},
     ]
     assert [candidate.href for candidate in _candidates(links)] == [links[0]["href"], links[1]["href"]]
+
+
+@pytest.mark.parametrize("suffix", ["", "?lang=eng", "?lang=ger"])
+def test_official_umantis_board_survives_empty_model_selection(suffix):
+    from phd_searcher.pipeline.discovery import _select_with_supported_boards
+    url = "https://recruitingapp-5034.de.umantis.com/Jobs/2" + suffix
+    candidates = [_Link(url, "Vacancies", "https://institute.example/123/career")]
+    assert _select_with_supported_boards("[]", candidates, "https://institute.example/en") == [url]
+    assert _select_with_supported_boards("invalid", candidates, "https://institute.example/en") == [url]
+
+
+@pytest.mark.parametrize(("url", "referrer"), [
+    ("https://recruitingapp-5034.de.umantis.com/Jobs/2", ""),
+    ("https://recruitingapp-5034.de.umantis.com/Jobs/2", "https://partner.example/career"),
+    ("https://recruitingapp-5034.de.umantis.com/Jobs/2", "https://institute.example/partners"),
+    ("https://recruitingapp-5034.de.umantis.com/SelfService?lang=eng", "https://institute.example/career"),
+    ("https://recruitingapp-5034.de.umantis.com/Vacancies/Register/2?lang=eng", "https://institute.example/career"),
+    ("https://recruitingapp-5034.de.umantis.com/Jobs/2?Extended=Search&lang=eng", "https://institute.example/career"),
+    ("https://recruitingapp-5034.de.umantis.com/Jobs/2?lang=eng&lang=ger", "https://institute.example/career"),
+    ("https://recruitingapp-5034.de.umantis.com.evil.test/Jobs/2", "https://institute.example/career"),
+    ("https://user@recruitingapp-5034.de.umantis.com/Jobs/2", "https://institute.example/career"),
+])
+def test_umantis_retention_requires_scoped_board_and_official_recruitment_provenance(url, referrer):
+    from phd_searcher.pipeline.discovery import _select_with_supported_boards
+    assert _select_with_supported_boards("[]", [_Link(url, "Jobs", referrer)], "https://institute.example/") == []

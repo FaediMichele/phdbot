@@ -11,7 +11,7 @@ import logging
 import re
 from datetime import UTC, datetime, timedelta
 from typing import cast
-from urllib.parse import urljoin, urlparse, urlsplit
+from urllib.parse import parse_qs, urljoin, urlparse, urlsplit
 from xml.etree import ElementTree
 
 import httpx
@@ -356,10 +356,10 @@ async def _collect_candidates(
     for candidate in merged:
         # A duplicate link from a homepage/sitemap must not erase stronger
         # provenance subsequently observed on an official recruitment hub.
-        if workday_board(candidate.href):
+        if not _retained_recruitment_board(candidate, website_url):
             for group in groups:
                 for observed in group:
-                    if observed.href == candidate.href and recruitment_referrer(observed.referrer, website_url):
+                    if observed.href == candidate.href and _retained_recruitment_board(observed, website_url):
                         candidate.referrer = observed.referrer
     return merged
 
@@ -414,10 +414,34 @@ def _stop_requested(progress: Progress) -> bool:
     return progress.should_stop
 
 
+def _retained_recruitment_board(link: _Link, website: str) -> bool:
+    """Keep explicitly linked boards as sources, never as opportunity verdicts."""
+    if not recruitment_referrer(link.referrer, website):
+        return False
+    if workday_board(link.href):
+        return True
+    # Public tenant-scoped HTML board observed on official recruitment pages.
+    # Search forms, subscriptions, accounts and individual applications are not
+    # boards. Preserve the exact URL/language; generic schema validation follows.
+    try:
+        parsed = urlsplit(link.href)
+        query = parse_qs(parsed.query, keep_blank_values=True, strict_parsing=True)
+        return bool(
+            parsed.scheme == "https" and not parsed.username and not parsed.password
+            and parsed.port in {None, 443} and not parsed.fragment
+            and re.fullmatch(r"recruitingapp-[0-9]+\.de\.umantis\.com", parsed.hostname or "")
+            and re.fullmatch(r"/Jobs/[0-9]+/?", parsed.path)
+            and set(query) <= {"lang"}
+            and (not query or (len(query["lang"]) == 1 and re.fullmatch(r"[a-z]{3}", query["lang"][0])))
+        )
+    except ValueError:
+        return False
+
+
 def _select_with_supported_boards(reply: str, candidates: list[_Link], website: str) -> list[str]:
     supported = [
         c.href for c in candidates
-        if workday_board(c.href) and recruitment_referrer(c.referrer, website)
+        if _retained_recruitment_board(c, website)
     ]
     try:
         selected = _parse_reply(reply, {c.href for c in candidates})
@@ -580,7 +604,7 @@ async def run(
                             )
                         except DiscoverySelectionExhaustedError:
                             # Preserve the existing conservative supported-board fallback.
-                            if not any(workday_board(c.href) and recruitment_referrer(c.referrer, uni.website_url) for c in candidates):
+                            if not any(_retained_recruitment_board(c, uni.website_url) for c in candidates):
                                 raise  # Keep the real tool error, not a synthetic JSON parse error.
                             valid = _select_with_supported_boards("invalid", candidates, uni.website_url)
                         else:

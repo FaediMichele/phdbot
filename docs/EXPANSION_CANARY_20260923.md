@@ -173,3 +173,19 @@ content frames. Examined pages expose projects/publications/contact, no recruitm
 link; the German partner is not proven to be an ATS. This limited observation does
 not establish absence of vacancies. Frame support remains deferred pending evidence
 of useful recall. Local receipts preserve the HTML and hashes.
+
+MPG anthropology run147/schedule35 selected the official career landing page8081,
+then extracted four navigation links (Vacancies, Job Search, Subscription, Login).
+All stayed out of live search. The actual Umantis board, linked by that same official
+career page, contains an Economic Experimentation guest-research programme. Audited
+detail describes1–6months, normally self-funded, with discretionary support; board
+lists30April/31October2026 deadlines. This is not a funded PhD vacancy.
+
+A prompt-only isolated replay still missed Umantis and was discarded. Deterministic
+source retention now includes narrowly recognized tenant-scoped Umantis Jobs boards
+only with explicit official recruitment-page provenance. It preserves language and
+rejects search/register/login variants; generic schema and opportunity gates remain.
+The same saved HTML/model selection now retains the actual board without further
+inference.1020 unit tests/Ruff/mypy pass. This proves routing on the audited sample,
+not successful live extraction or searchability; inspect CURRENT_STATE for deployment
+and subsequent canary. No historical run or existing opportunity verdict was changed.
