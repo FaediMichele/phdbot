@@ -23,6 +23,7 @@ from phd_searcher.config import Settings
 from phd_searcher.database.models.listing_page import ListingPage
 from phd_searcher.database.models.university import University
 from phd_searcher.pipeline.discovery import _same_site
+from phd_searcher.pipeline.funding_sources import FUNDING_URLS, funding_items
 from phd_searcher.pipeline.listing_render import ListingRenderError, listing_render_selector, render_wait_options
 from phd_searcher.pipeline.progress import Progress
 from phd_searcher.pipeline.retry import retry_async
@@ -398,6 +399,7 @@ async def run(
             .order_by(
                 case((ListingPage.kind == "aggregator", 0), else_=1),
                 case((ListingPage.url.like("https://%.myworkdayjobs.com/%"), 0), else_=1),
+                case((ListingPage.url.in_(FUNDING_URLS), 0), else_=1),
                 case((ListingPage.schema_status == "missing", 0), else_=1),
                 func.coalesce(University.sitelinks, 0).desc(),
             )
@@ -486,6 +488,15 @@ async def run(
                         page.quality_checked_at = datetime.now(UTC).replace(tzinfo=None)
                         print(f"schema_gen: skipped model work for {page.url}: {reason}")
                         raise SchemaDeferredError(reason)
+                    if page.url in FUNDING_URLS:
+                        funding_items(source_html, page.url)  # Revalidate today's DOM before reusing the adapter.
+                        page.extraction_schema = {"adapter": "funding", "baseSelector": "main", "fields": []}
+                        page.schema_status = "ok"
+                        page.quality_status = "unknown"
+                        page.quality_reason = None
+                        generated += 1
+                        print(f"schema_gen: prepared audited funding adapter without LLM for {page.url}")
+                        raise _SchemaPreparedError
                     query = _QUERY_AGGREGATOR if page.kind == "aggregator" else _QUERY_UNIVERSITY
                     html = result.cleaned_html or result.html
                     expected_fields = (

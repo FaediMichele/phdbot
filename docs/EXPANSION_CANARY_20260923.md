@@ -114,3 +114,16 @@ without a domain/family or neighbouring-deadline verdict. Scholarship source8073
 still failed; archive sources8074/8076 were selected incorrectly. These remain repair
 work, not evidence that the foundation has no funding. Missing-content protection is
 now deployed and source8072 held reversibly; all its records were preserved.
+
+
+The scholarship repair uses a source-scoped audited funding adapter through the
+existing source-adapter contract. It resolves ARIA degree tabs, splits sibling
+sections, preserves eligibility/stipend text, and fails visibly on changed or
+ambiguous layout. Only the explicitly shared Masters/PhD annual deadline is inherited;
+the targeted scholarship uses its own HFF deadline, not the university's later date.
+No year or open verdict is fabricated for recurring dates. Current saved AND fresh
+HTML produced three distinct records:Masters Open,PhD Open,PhD Targeted(deadline
+2026-03-16). Schema preparation revalidates the source before selecting the adapter.
+An isolated rollback test verified zero LLM calls and priority over missing archive
+schemas at budget1.1005 unit tests/Ruff/mypy126files pass. Live canary and deployment
+are tracked separately in CURRENT_STATE; no new searchable count claimed yet.

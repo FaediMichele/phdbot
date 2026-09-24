@@ -20,6 +20,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 from phd_searcher.pipeline.departmental_sources import DEPARTMENTAL_URLS, departmental_items
+from phd_searcher.pipeline.funding_sources import FUNDING_URLS, funding_items
 from phd_searcher.pipeline.normalize import extract_terms, parse_compensation
 from phd_searcher.pipeline.workday import fetch_workday_page
 
@@ -31,7 +32,7 @@ _COPENHAGEN_LISTINGS = frozenset(
         "https://employment.ku.dk/all-vacancies/",
     }
 )
-SUPPORTED_SOURCE_ADAPTERS = frozenset({_TALENTLINK, _TALENTADORE, "departmental", "workday"})
+SUPPORTED_SOURCE_ADAPTERS = frozenset({_TALENTLINK, _TALENTADORE, "departmental", "funding", "workday"})
 _ALLOWED_ADAPTER_HOSTS: dict[str, frozenset[str]] = {
     _TALENTLINK: frozenset({"recruitmentplatform.com"}),
     _TALENTADORE: frozenset({"ats.talentadore.com"}),
@@ -343,16 +344,18 @@ async def fetch_source_adapter(
         if source_url is None:
             raise RuntimeError("Workday requires its admitted source URL")
         return await fetch_workday_page(source_url, page_number)
-    if adapter == "departmental":
-        if source_url not in DEPARTMENTAL_URLS:
-            raise RuntimeError("untrusted departmental source URL")
+    if adapter in {"departmental", "funding"}:
+        allowed = DEPARTMENTAL_URLS if adapter == "departmental" else FUNDING_URLS
+        if source_url not in allowed:
+            raise RuntimeError(f"untrusted {adapter} source URL")
         if page_number > 0:
             return []
         assert source_url is not None
         async with httpx.AsyncClient(timeout=60, follow_redirects=False) as client:
             response = await client.get(source_url)
             response.raise_for_status()
-            return departmental_items(response.text, source_url)
+            extract = departmental_items if adapter == "departmental" else funding_items
+            return extract(response.text, source_url)
     if adapter is None and source_url in _COPENHAGEN_LISTINGS:
         if page_number > 0:
             return []  # All client-side pages are in the first HTML response.
