@@ -67,9 +67,18 @@ _OTHER_DATE_LABEL_RE = re.compile(
     re.IGNORECASE,
 )
 
+_START_DATE_ASIDE_RE = re.compile(
+    r"\(\s*(?:starting|start date|commencing|beginning)\b"
+    r"(?:(?!\b(?:deadline|apply|applications?)\b)[^()])*\)",
+    re.IGNORECASE,
+)
+
 
 def _deadline_clause(raw: str) -> str:
     """Keep a neighbouring metadata label out of stored deadline evidence."""
+    # Inline start-date asides are not deadlines. Remove only the aside so
+    # later application windows survive, without borrowing its year.
+    raw = _START_DATE_ASIDE_RE.sub(" ", raw)
     deadline = _DEADLINE_CONTEXT_RE.search(raw)
     if deadline:
         boundary = _OTHER_DATE_LABEL_RE.search(raw, deadline.start())

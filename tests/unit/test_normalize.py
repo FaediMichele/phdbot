@@ -259,3 +259,32 @@ def test_extract_terms_joins_a_salary_label_to_its_markdown_value():
     )
 
     assert compensation == "Salary: £60,484 - £73,058 per annum"
+
+
+def test_guest_research_windows_do_not_borrow_parenthetical_start_dates():
+    text = (
+        "Application deadlines are April 30th for the Winter Semester "
+        "(starting no earlier than October 1, 2026) and October 31st "
+        "for the Summer Semester (starting April 1, 2027)."
+    )
+    assert extract_deadline(text) == (None, None)
+    assert parse_deadline(text) is None
+    assert parse_deadline("Deadlines: 30 April 2026; 31 October 2026") == date(2026, 10, 31)
+
+
+def test_explicit_deadlines_survive_start_asides_and_reparse():
+    text = (
+        "Application deadlines: 30 April 2026 (starting October 1, 2026) "
+        "and 31 October 2026 (commencing April 1, 2027)."
+    )
+    raw, deadline = extract_deadline(text)
+    assert deadline == date(2026, 10, 31)
+    assert parse_deadline(raw) == deadline
+    assert raw is not None
+    assert "2027" not in raw
+    assert parse_deadline("31 October 2026 (beginning April 1, 2027)") == deadline
+
+
+def test_parenthetical_application_deadline_is_not_a_start_aside():
+    assert parse_deadline("Apply (deadline 31 October 2026)") == date(2026, 10, 31)
+    assert extract_deadline("Apply (application deadline 31 October 2026)")[1] == date(2026, 10, 31)
