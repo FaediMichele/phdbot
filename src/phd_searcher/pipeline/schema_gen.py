@@ -38,6 +38,7 @@ from phd_searcher.pipeline.source_validation import (
     page_state,
     staff_directory_evidence,
 )
+from phd_searcher.pipeline.umantis import umantis_board, verified_umantis_link
 from phd_searcher.pipeline.urls import is_listing_page_url
 from phd_searcher.pipeline.workday import linked_workday_board, recruitment_referrer, workday_board
 
@@ -481,7 +482,18 @@ async def run(
                         state, reason = "deferred", "source_preflight:staff_directory"
                     if (state != "unavailable" and uni is not None and page.source != "seed"
                         and not _same_site(target, uni.website_url) and not employer_evidence(source_html, uni.name)):
-                        state, reason = "deferred", "source_preflight:ownership_unverified"
+                        # A live link from the owner's recruitment page is an
+                        # alternative to exact-name JSON-LD on this scoped ATS.
+                        # Redirects may not silently change its tenant/language.
+                        linked = (
+                            target == page.url and umantis_board(target)
+                            and await verified_umantis_link(
+                                crawler, crawl_config, (page.quality_metrics or {}).get("discovery_referrer"),
+                                uni.website_url, target,
+                            )
+                        )
+                        if not linked:
+                            state, reason = "deferred", "source_preflight:ownership_unverified"
                     if state not in {"unavailable", "deferred"} and target != page.url:
                         canonical = await session.scalar(select(ListingPage).where(ListingPage.url == target, ListingPage.id != page.id))
                         if canonical is not None:

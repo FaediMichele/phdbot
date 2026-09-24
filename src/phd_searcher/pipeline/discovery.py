@@ -11,7 +11,7 @@ import logging
 import re
 from datetime import UTC, datetime, timedelta
 from typing import cast
-from urllib.parse import parse_qs, urljoin, urlparse, urlsplit
+from urllib.parse import urljoin, urlparse, urlsplit
 from xml.etree import ElementTree
 
 import httpx
@@ -37,6 +37,7 @@ from phd_searcher.pipeline.progress import Progress
 from phd_searcher.pipeline.retry import retry_async
 from phd_searcher.pipeline.source_owners import SourceOwners
 from phd_searcher.pipeline.source_validation import page_state
+from phd_searcher.pipeline.umantis import umantis_board
 from phd_searcher.pipeline.urls import is_listing_page_url
 from phd_searcher.pipeline.workday import recruitment_referrer, workday_board
 
@@ -420,22 +421,7 @@ def _retained_recruitment_board(link: _Link, website: str) -> bool:
         return False
     if workday_board(link.href):
         return True
-    # Public tenant-scoped HTML board observed on official recruitment pages.
-    # Search forms, subscriptions, accounts and individual applications are not
-    # boards. Preserve the exact URL/language; generic schema validation follows.
-    try:
-        parsed = urlsplit(link.href)
-        query = parse_qs(parsed.query, keep_blank_values=True, strict_parsing=True)
-        return bool(
-            parsed.scheme == "https" and not parsed.username and not parsed.password
-            and parsed.port in {None, 443} and not parsed.fragment
-            and re.fullmatch(r"recruitingapp-[0-9]+\.de\.umantis\.com", parsed.hostname or "")
-            and re.fullmatch(r"/Jobs/[0-9]+/?", parsed.path)
-            and set(query) <= {"lang"}
-            and (not query or (len(query["lang"]) == 1 and re.fullmatch(r"[a-z]{3}", query["lang"][0])))
-        )
-    except ValueError:
-        return False
+    return umantis_board(link.href)
 
 
 def _select_with_supported_boards(reply: str, candidates: list[_Link], website: str) -> list[str]:
