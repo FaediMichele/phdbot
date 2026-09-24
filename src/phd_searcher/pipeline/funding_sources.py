@@ -84,7 +84,10 @@ def funding_items(html: str, source_url: str) -> list[dict[str, object]]:
                 # stable by source + distinct title and retains inline evidence.
                 "description": description,
                 "deadline": deadline,
-                "position_type": "phd" if degree == "PhD" else "masters_mph",
+                # The degree tab describes funding eligibility, not admission
+                # to a new degree position. Applicants apply to the university
+                # separately; preserve the degree in title/evidence instead.
+                "position_type": "research_fellowship",
                 "language": "en",
             })
     if degrees != {"Masters", "PhD"}:

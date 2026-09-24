@@ -33,8 +33,8 @@ def test_tabs_and_sections_keep_identity_evidence_and_deadlines_separate():
     assert 'Coastal archaeology' not in normalized[1].description
     assert 'One year' not in normalized[1].description
     assert 'Three years' not in normalized[2].description
-    assert normalized[0].position_type == 'masters_mph'
-    assert normalized[1].position_type == 'phd'
+    assert normalized[0].position_type == 'research_fellowship'
+    assert normalized[1].position_type == 'research_fellowship'
 
 
 def test_changing_targeted_deadline_does_not_date_neighbouring_recurring_scheme():

@@ -127,3 +127,16 @@ HTML produced three distinct records:Masters Open,PhD Open,PhD Targeted(deadline
 An isolated rollback test verified zero LLM calls and priority over missing archive
 schemas at budget1.1005 unit tests/Ruff/mypy126files pass. Live canary and deployment
 are tracked separately in CURRENT_STATE; no new searchable count claimed yet.
+
+
+Run142 completed in53.2s: schema1/scrape3/quality3/index1, zero schema LLM calls.
+The expired targeted scholarship103939 stayed out of search. PhD Open103938 was
+provisional with open_status uncertainty; annual dates remained yearless. The search
+check exposed a DB/index type mismatch: the initial adapter used the degree-tab type,
+while the existing taxonomy correctly classifies grants as research_fellowship.
+These awards require a separate university application, so the adapter now uses
+research_fellowship for funding and retains Masters/PhD in the title and evidence.
+The conservative classifier for generic scholarship directories is unchanged.
+Temporary feedback11 holds only103938 until fresh upsert/index confirms consistency;
+its original concern is clarified here rather than silently erasing the audit.
+1005 unit tests/Ruff/mypy passed after this final type alignment.
