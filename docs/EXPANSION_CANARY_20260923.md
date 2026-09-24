@@ -140,3 +140,12 @@ The conservative classifier for generic scholarship directories is unchanged.
 Temporary feedback11 holds only103938 until fresh upsert/index confirms consistency;
 its original concern is clarified here rather than silently erasing the audit.
 1005 unit tests/Ruff/mypy passed after this final type alignment.
+
+
+Run143 completed the ordinary refresh with the same three position IDs. Live search
+now exposes two provisional recurring funding schemes (Masters103937 and PhD103938),
+with grant type consistent in DB/index. Targeted103939 remains expired and excluded.
+Feedback11 was retracted after verification; archive feedback7–10 remains active.
+These are two funding schemes with unverified current opening, not two certified
+open PhD training posts. No schema regeneration or forced opportunity verdict was
+needed for the final refresh. Operational receipts remain local and ignored.
