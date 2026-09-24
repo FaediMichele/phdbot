@@ -122,6 +122,16 @@ rendering, rather than generating a schema from the page title. These holds beco
 eligible for schema recheck after seven days; they do not establish absence of jobs.
 Concrete role text, embedded boards and application links prevent this shortcut.
 
+Umantis HTML boards can be retained from an explicit official recruitment-page
+link even if model selection omits them. Schema admission re-fetches that official
+page and verifies the exact tenant/language board; a stored referrer is insufficient.
+Search forms, subscription and login routes are outside this automatic retention
+rule (they may still appear among model-selected candidates). During collection,
+an application-login URL is replaced only when the already-fetched board contains
+a public detail anchor with matching vacancy ID, language, title and host. This
+repairs navigation without extra requests or schema generations. Existing records
+need an audited identity-preserving repair if they were collected before this rule.
+
 An audited funding adapter currently covers Honor Frost's scholarship page. It
 revalidates degree tabs and separate offer sections on each fetch. Recurring dates
 remain yearless and targeted deadlines stay with their own offer; changed layouts
