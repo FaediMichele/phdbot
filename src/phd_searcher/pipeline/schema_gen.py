@@ -250,6 +250,7 @@ async def _generate_schema_with_tools(
     initial_message: dict[str, Any] = {"role": "user", "content": prompt}
     messages: list[dict[str, Any]] = [initial_message]
     last_error = "the model did not call the schema tool"
+    missing_tool_responses = 0
 
     for attempt in range(1, max_attempts + 1):
         try:
@@ -271,11 +272,20 @@ async def _generate_schema_with_tools(
             last_error = transport_error
             continue
         if not calls:
+            missing_tool_responses += 1
+            # Allow one reminder, but do not spend all four correction turns
+            # repeating a protocol failure that provides no schema to validate.
+            if missing_tool_responses >= 2:
+                raise SchemaGenerationExhaustedError(
+                    f"schema tool failed after {attempt} attempts: "
+                    "2 consecutive responses without a tool call"
+                )
             messages.append({"role": "assistant", "content": message.get("content") or ""})
             last_error = "No tool call was produced. Call submit_extraction_schema."
             messages.append({"role": "user", "content": last_error})
             continue
 
+        missing_tool_responses = 0
         call = calls[0]
         messages.append(message)
         try:

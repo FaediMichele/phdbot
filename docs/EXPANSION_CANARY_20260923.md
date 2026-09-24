@@ -149,3 +149,27 @@ Feedback11 was retracted after verification; archive feedback7–10 remains acti
 These are two funding schemes with unverified current opening, not two certified
 open PhD training posts. No schema regeneration or forced opportunity verdict was
 needed for the final refresh. Operational receipts remain local and ignored.
+
+September24 follow-up cohort (schedules32–34) completed as runs144–146. RCRM144
+found its official vacancies board8080 but schema generation exhausted four
+responses without a tool call (387.5s whole run); no positions were produced.
+Saved board evidence contains clinical/service roles, not an established academic
+opportunity, so no repair rerun is justified by this audit alone. IEES145 recovered
+the obsolete registry path through the identity-verified root and found no listing
+(77.1s). IOMT146 preserved a technical root404 failure (56.3s); an independent HTTPS
+check failed hostname certificate validation. No bypass or absence-of-jobs verdict.
+Live institution browsing returned zero hits for all three; completed runs unchanged.
+
+The schema generator now allows one reminder after a response without tool calls,
+then raises its existing non-retryable exhaustion error on the second consecutive
+missing-tool response. Actual tool submissions reset that streak and retain the
+four-attempt validation/correction budget. Regression tests cover recovery after a
+reminder, four productive corrections, and interrupted missing-tool streaks. This
+bounds protocol failures; it does not prove a measured reduction in wall-clock time
+or decide whether a source contains opportunities. Release status is in CURRENT_STATE.
+
+IOEW's English image-language entry was also audited through its three navigation/
+content frames. Examined pages expose projects/publications/contact, no recruitment
+link; the German partner is not proven to be an ATS. This limited observation does
+not establish absence of vacancies. Frame support remains deferred pending evidence
+of useful recall. Local receipts preserve the HTML and hashes.
