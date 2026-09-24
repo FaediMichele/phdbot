@@ -33,6 +33,7 @@ from phd_searcher.pipeline.source_adapters import (
     fetch_source_adapter,
     normalize_source_item_formats,
 )
+from phd_searcher.pipeline.umantis import repair_umantis_detail_urls
 from phd_searcher.pipeline.urls import is_listing_page_url
 
 _SAFETY_MAX_PAGES = 1500
@@ -207,7 +208,8 @@ async def _fetch_page(
         if not isinstance(parsed_batch, list):
             raise RuntimeError(f"extraction did not return a list: {url}")
         batch = cast(list[object], parsed_batch)
-        return [cast(dict[str, object], item) for item in batch if isinstance(item, dict)]
+        items = [cast(dict[str, object], item) for item in batch if isinstance(item, dict)]
+        return repair_umantis_detail_urls(items, result.html or "", result.redirected_url or page.url)
 
     is_euraxess = urlparse(page.url).hostname == _EURAXESS_HOST
     return await retry_async(

@@ -46,3 +46,33 @@ async def verified_umantis_link(
         and re.search(r"\b(jobs?|vacancies|openings|positions|stellenangebote)\b", a.get_text(" ", strip=True), re.I)
         for a in soup.select("a[href]")
     )
+
+
+def repair_umantis_detail_urls(
+    items: list[dict[str, object]], html: str, source_url: str,
+) -> list[dict[str, object]]:
+    """Use an observed title link for the same vacancy, never synthesize a URL."""
+    if not umantis_board(source_url):
+        return items
+    origin = urlsplit(source_url)
+    links: dict[tuple[str, str, str], set[str]] = {}
+    for anchor in BeautifulSoup(html, "html.parser").select("a[href]"):
+        url = urljoin(source_url, str(anchor.get("href", "")))
+        parsed = urlsplit(url)
+        match = re.fullmatch(r"/Vacancies/([0-9]+)/Description/([0-9]+)", parsed.path)
+        if (match and parsed.scheme == origin.scheme and parsed.netloc == origin.netloc
+                and not parsed.query and not parsed.fragment):
+            title = " ".join(anchor.get_text(" ", strip=True).casefold().split())
+            links.setdefault((match[1], match[2], title), set()).add(url)
+    repaired = []
+    for item in items:
+        current = urlsplit(urljoin(source_url, str(item.get("url") or "")))
+        match = re.fullmatch(r"/Vacancies/([0-9]+)/Application/CheckLogin/([0-9]+)", current.path)
+        title = " ".join(str(item.get("title") or "").casefold().split())
+        if (match and title and current.scheme == origin.scheme and current.netloc == origin.netloc
+                and not current.query and not current.fragment):
+            targets = links.get((match[1], match[2], title), set())
+            if len(targets) == 1:
+                item = {**item, "url": next(iter(targets))}
+        repaired.append(item)
+    return repaired

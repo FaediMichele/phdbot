@@ -49,3 +49,33 @@ async def test_untrusted_provenance_does_not_fetch(ref):
     client = crawler('')
     assert not await verified_umantis_link(client, None, ref, 'https://institute.example', URL)
     client.arun.assert_not_called()
+
+
+def test_detail_repair_uses_observed_title_link_and_preserves_input():
+    from phd_searcher.pipeline.umantis import repair_umantis_detail_urls
+    item = {"title": "Guest Researcher", "url": "/Vacancies/490/Application/CheckLogin/2"}
+    html = '<a href="/Vacancies/490/Description/2">Guest Researcher</a>'
+    result = repair_umantis_detail_urls([item], html, URL)
+    assert result[0]["url"] == "https://recruitingapp-5034.de.umantis.com/Vacancies/490/Description/2"
+    assert item["url"] == "/Vacancies/490/Application/CheckLogin/2"
+
+
+@pytest.mark.parametrize("html", [
+    '<a href="/Vacancies/491/Description/2">Guest Researcher</a>',
+    '<a href="/Vacancies/490/Description/1">Guest Researcher</a>',
+    '<a href="/Vacancies/490/Description/2">Another post</a>',
+    '<a href="https://other.example/Vacancies/490/Description/2">Guest Researcher</a>',
+    '<p>No detail link</p>',
+])
+def test_detail_repair_abstains_on_identity_or_language_mismatch(html):
+    from phd_searcher.pipeline.umantis import repair_umantis_detail_urls
+    items = [{"title": "Guest Researcher", "url": "/Vacancies/490/Application/CheckLogin/2"}]
+    assert repair_umantis_detail_urls(items, html, URL) == items
+
+
+def test_detail_repair_preserves_existing_detail_and_unrelated_sources():
+    from phd_searcher.pipeline.umantis import repair_umantis_detail_urls
+    html = '<a href="/Vacancies/490/Description/2">Guest Researcher</a>'
+    items = [{"title": "Guest Researcher", "url": "/Vacancies/490/Description/2"}]
+    assert repair_umantis_detail_urls(items, html, URL) == items
+    assert repair_umantis_detail_urls(items, html, "https://other.example/jobs") is items
