@@ -189,3 +189,25 @@ The same saved HTML/model selection now retains the actual board without further
 inference.1020 unit tests/Ruff/mypy pass. This proves routing on the audited sample,
 not successful live extraction or searchability; inspect CURRENT_STATE for deployment
 and subsequent canary. No historical run or existing opportunity verdict was changed.
+
+Run148/schedule36 verified live discovery retention: the Umantis tenant boards were
+persisted, including English8085. Budget1 schema preparation selected German8084,
+which correctly deferred as ownership_unverified: the ATS does not supply the exact
+employer JobPosting metadata required by the generic external-source gate. Four old
+career navigation rows were refreshed; index0.148 remains DONE, not a failed run to
+restart. Search-form variants selected by the model also exist; source retention
+itself did not auto-admit those variants.
+
+Umantis schema admission now re-fetches the recorded official recruitment page and
+requires a current exact board link with a recruitment label. Tenant/language changes,
+foreign redirects, removed links and denial pages do not verify ownership. Stored
+provenance alone is insufficient, and generic quality/index checks remain. The shared
+URL recognizer retains the same restricted discovery scope. Saved official HTML
+passed;13 ownership regressions plus the existing suite pass.
+
+Independent temporal regression: the guest-research detail mentions yearless April/
+October deadlines beside parenthetical start dates in2026/2027. Those start dates
+previously yielded a false April2027 deadline. Explicit start-date asides are now
+excluded; the yearless detail abstains, while the board's fully dated October2026
+window remains parseable. No year is borrowed.1036 tests/Ruff/mypy127files pass.
+Live collection of English8085 is still required before claiming useful new results.
