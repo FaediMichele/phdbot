@@ -79,3 +79,33 @@ def test_detail_repair_preserves_existing_detail_and_unrelated_sources():
     items = [{"title": "Guest Researcher", "url": "/Vacancies/490/Description/2"}]
     assert repair_umantis_detail_urls(items, html, URL) == items
     assert repair_umantis_detail_urls(items, html, "https://other.example/jobs") is items
+
+
+def test_detail_cleaner_retains_offer_and_application_sections_together():
+    from phd_searcher.pipeline.enrich import _clean_detail_document
+    url = "https://recruitingapp-5034.de.umantis.com/Vacancies/490/Description/2"
+    offer = "Visiting researchers are self-funded. " * 15
+    contact = "Please submit your application electronically. " * 25
+    html = ('<div class="container"><div class="header">Unrelated header</div>'
+            '<div class="content">Guest researcher programme</div>'
+            f'<div class="content">Our Offer {offer}</div>'
+            f'<div class="content">Contact {contact}</div></div><footer>Other jobs</footer>')
+    text = _clean_detail_document(html, "fallback", expected_url=url)
+    assert "Our Offer" in text
+    assert "self-funded" in text
+    assert "Contact" in text
+    assert "Other jobs" not in text
+    assert "Unrelated header" not in text
+
+
+@pytest.mark.parametrize("url", [None, "https://other.example/Vacancies/490/Description/2", URL])
+def test_detail_sections_are_scoped_to_recognized_detail_url(url):
+    from phd_searcher.pipeline.umantis import umantis_detail_content
+    assert umantis_detail_content('<div class="container"><div class="content">A</div><div class="content">B</div></div>', url) is None
+
+
+def test_multiple_vacancy_containers_are_not_combined():
+    from phd_searcher.pipeline.umantis import umantis_detail_content
+    html = '<div class="container"><div class="content">A</div><div class="content">B</div></div>'
+    url = "https://recruitingapp-5034.de.umantis.com/Vacancies/490/Description/2"
+    assert umantis_detail_content(html + html, url) is None

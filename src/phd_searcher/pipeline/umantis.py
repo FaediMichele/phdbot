@@ -76,3 +76,26 @@ def repair_umantis_detail_urls(
                 item = {**item, "url": next(iter(targets))}
         repaired.append(item)
     return repaired
+
+
+def umantis_detail_content(html: str, url: str | None) -> str | None:
+    """Keep sibling sections of a single scoped vacancy, not just the longest."""
+    if not url:
+        return None
+    try:
+        parsed = urlsplit(url)
+        if (parsed.scheme != "https" or parsed.username or parsed.password
+                or parsed.port not in {None, 443} or parsed.query or parsed.fragment
+                or not re.fullmatch(r"recruitingapp-[0-9]+\.de\.umantis\.com", parsed.hostname or "")
+                or not re.fullmatch(r"/Vacancies/[0-9]+/Description/[0-9]+", parsed.path)):
+            return None
+    except ValueError:
+        return None
+    soup = BeautifulSoup(html, "html.parser")
+    containers = soup.select(".container")
+    if len(containers) != 1:
+        return None
+    sections = containers[0].select(":scope > .content")
+    if not 2 <= len(sections) <= 12:
+        return None
+    return "\n".join(str(section) for section in sections)
