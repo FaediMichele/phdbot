@@ -236,3 +236,11 @@ hosts, board URLs or multiple containers. Saved real HTML produces2424characters
 including self-funded terms, without borrowing start dates.1048 tests/Ruff/mypy pass.
 Schedule39 targets only evidence/index refresh; live final verification remains in
 CURRENT_STATE.150 is DONE and untouched; no additional lead claimed for this repair.
+
+Run151/schedule39 completed the targeted evidence refresh. Live final verification
+confirms the same sole searchable ID103951, publicDescriptionURL, deadline2026-10-31,
+2424characters including self-funded conditions, no numeric compensation claim,
+and no navigation results. It remains probable research_staff, not a funded PhD
+vacancy; the API currently reports no uncertainty flags despite probable status.
+Receipt umantis-sections-verification.json. This completes the audited official-site
+→externalATS→publicdetail→search path for this case. All completed runs are preserved.
