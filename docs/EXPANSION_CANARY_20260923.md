@@ -226,3 +226,13 @@ was fetched to verify the exact replacement and absence of a conflicting DB URL;
 before-values are in umantis-detail-refresh.json. Schedule38 refreshes scrape/quality/
 evidence/enrich/index without discovery/schema or deep review. Final evidence/search
 verification is still pending in CURRENT_STATE; do not count the refresh as a new lead.
+
+Run150 preserved the same103951 with its public detail URL and October2026 deadline.
+Its final evidence audit failed: generic cleanup retained only the longest of several
+`.content` siblings (the892-character application/contact section), dropping OurOffer.
+The scoped Umantis detail cleaner now retains sibling content sections inside one
+unique container on a recognized single-vacancy detail URL. It abstains on other
+hosts, board URLs or multiple containers. Saved real HTML produces2424characters,
+including self-funded terms, without borrowing start dates.1048 tests/Ruff/mypy pass.
+Schedule39 targets only evidence/index refresh; live final verification remains in
+CURRENT_STATE.150 is DONE and untouched; no additional lead claimed for this repair.
