@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import asyncio
+from urllib.parse import urlsplit
 
 import httpx
 
 from phd_searcher.config.search import SearchConfig
 
-_PHD_TERMS = 'phd OR doctoral OR "open positions" OR vacancies'
+_ACADEMIC_TERMS = (
+    'phd OR doctoral OR "open positions" OR vacancies OR postdoc OR assistantship '
+    'OR internship OR traineeship OR "research fellowship" OR "research positions" OR MPH'
+)
 
 
 def _ddg_search(query: str, max_results: int) -> list[str]:
@@ -31,7 +35,12 @@ async def _brave_search(query: str, max_results: int, api_key: str) -> list[str]
 
 async def search_listing_candidates(config: SearchConfig, domain: str) -> list[str]:
     """URL candidati per le pagine bandi di un dominio. Mai un'eccezione: [] su errore."""
-    query = f"site:{domain} {_PHD_TERMS}"
+    # A www-only site query omits jobs.example.edu and department subdomains.
+    host = urlsplit(domain if "://" in domain else f"https://{domain}").hostname or ""
+    host = host.casefold().removeprefix("www.")
+    if not host:
+        return []
+    query = f"site:{host} {_ACADEMIC_TERMS}"
     try:
         if config.provider == "brave" and config.api_key:
             return await _brave_search(query, config.max_results, config.api_key)

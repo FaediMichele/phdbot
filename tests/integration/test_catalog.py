@@ -10,6 +10,8 @@ def test_universities_coverage(client, seeded):
     test_uni = next(u for u in unis if u["name"] == "Test University")
     assert test_uni["country"] == "IT"
     assert test_uni["positions_count"] == 1
+    assert test_uni["positions_current"] == 1
+    assert test_uni["positions_searchable"] == 0
 
 
 def test_position_detail(client, seeded):
@@ -22,9 +24,19 @@ def test_position_detail(client, seeded):
     assert body["found"] is True
     assert body["position"]["title"] == "PhD in Testing"
     assert body["position"]["university"] == "Test University"
+    assert body["position"]["detail_cleanup_needed"] is True
+    assert body["position"]["detail_refresh_queued"] is False
+
+    queued = client.post("/v1/positions/1/detail-refresh")
+    assert queued.status_code == 200
+    assert queued.json() == {"found": True, "cleanup_needed": True, "queued": True}
+    assert client.get("/v1/positions/1").json()["position"]["detail_refresh_queued"] is True
 
 
 def test_position_not_found(client, seeded):
     r = client.get("/v1/positions/999999")
     assert r.status_code == 200
     assert r.json() == {"found": False, "position": None}
+
+    refresh = client.post("/v1/positions/999999/detail-refresh")
+    assert refresh.status_code == 404
