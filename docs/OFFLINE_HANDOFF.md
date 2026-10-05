@@ -147,3 +147,16 @@ richiede la maggioranza delle fonti sane ricercabile, come definito in
 [RELEASE_COVERAGE_20261005.md](RELEASE_COVERAGE_20261005.md). Coda vuota: la
 run index limitata avrebbe cancellazione globale di vettori stale, da
 verificare prima; nessuna nuova wave avviata.
+
+Aggiornamento 13:13: controllo della pulizia indice superato (zero vettori
+corrispondenti agli ID SQL non indicizzati). Run 3820 conclusa: 7 fonti e 187
+record sottoposti a quality. Schedule 3681/run 3821 avviata per indicizzare
+fino a 14 risultati; controllarne il terminale senza ripeterla. La precedente
+run 3819 era un no-op per filtro nome errato.
+
+Aggiornamento 5 ottobre, 19:10: run 3821 conclusa, 14 record indicizzati,
+156,44 secondi attivi; confermati i marker SQL. Nessuna schedule attiva.
+Dopo il riavvio dei servizi la UI servita coincide con il file corretto:
+accordion scaduti, calendario e tab User preservati. Non ripetere la run.
+Le sei fonti mai raccolte sono recovery delle run 274/1368/1504/1867,
+non nuovo lavoro indipendente pronto da accodare.

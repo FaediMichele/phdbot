@@ -22,9 +22,30 @@ valutare campioni rappresentativi e stimare le fonti recuperabili senza GPU.
 Poi batch di raccolta/diffusione indicizzazione per i casi sicuri, con limiti
 termici e Valet wake solo al termine di cohort utili. Non riavviare run già fatte.
 
-Una run index limitata a 14 non è stata accodata subito: l'implementazione
-corrente, anche con `limit`, legge globalmente gli `indexed_at IS NULL` e invia
-una cancellazione vettoriale per tutti gli ID stale prima di applicare il limite.
-Con oltre 31mila candidati esclusi, richiede prima un controllo del comportamento
-dell'indice/backup. È un blocco tecnico concreto; non riempire la coda con run
-poco utili o apparentemente piccole ma con effetti globali.
+La verifica della pulizia preliminare ha risolto un dubbio sullo scope: lo
+stadio index legge gli ID non indicizzati globalmente prima del limite, ma il
+controllo Qdrant ha trovato zero vettori corrispondenti ai 58.577 ID non
+indicizzati. Non è stato necessario modificare questa logica ordinaria.
+Artefatto: `var/release-20261005/stale-index-preflight.json`.
+
+Lavoro utile eseguito durante le modifiche UI:
+
+- Schedule 3679 / run 3819: no-op dovuto a `name` erroneamente usato come
+  etichetta anziché filtro. Conservato, nessun dato elaborato.
+- Schedule 3680 / run 3820: qualità su sette fonti, 187 record elaborati,
+  terminale done; circa 22 secondi fra avvio/fine schedule contro stima 120 s.
+- Schedule 3681 / run 3821: indicizzazione limitata a 14 candidati, stimata
+  120 secondi; conclusa con 14 record indicizzati in 156,44 secondi attivi
+  (162,23 s fra avvio e fine schedule). Verificati i 14 marker SQL.
+
+Prima di lasciare la coda: sei fonti con schema ok non hanno last_scraped_at
+(ID 8259, 9404, 9565, 9566, 9954, 9955). La loro storia va verificata prima
+di accodare nuovi job, per evitare duplicati di recovery pendenti. L'espansione
+con generazione LLM richiede ancora gestione sicura delle richieste lunghe.
+Il prossimo batch non dipende dalla disponibilità di token ma da queste verifiche.
+
+Verifica del 5 ottobre, 19:10: nessuna schedule attiva o accodata. Le sei
+fonti mai raccolte appartengono a recovery esistenti: run 274 fermata, run
+1368/1504/1867 fallite per sorgenti irraggiungibili. Conservare i checkpoint;
+non creare nuovi job equivalenti. Prima di Resume serve verificare la causa
+e la raggiungibilità, e per 274 gli stadi LLM ancora pendenti.

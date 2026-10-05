@@ -1527,7 +1527,7 @@ function renderSaved() {
   $("#saved-count").textContent = `${records.length}${records.length !== total ? ` of ${total}` : ""} saved`;
   renderSavedCalendar(records);
   const current = records.filter(record => !savedDeadlineExpired(record));
-  const expired = records.filter(savedDeadlineExpired);
+  const expired = records.filter(record => savedDeadlineExpired(record));
   $("#saved-items").innerHTML = current.length ? current.map(renderSavedItem).join("")
     : `<div class="saved-empty">${records.length ? "No saved opportunities with a current or unknown deadline match these filters." : total ? "No saved opportunities match these filters." : "Save an opportunity from Search to build your shortlist."}</div>`;
   $("#saved-expired").hidden = expired.length === 0;
