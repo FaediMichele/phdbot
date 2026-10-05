@@ -107,3 +107,13 @@ docker inspect phdbot-api-1 --format '{{.Image}} {{.State.Health.Status}}'
 I pulsanti `Stop current run` e `Resume interrupted run` e le relative rotte erano presenti nel codice esaminato, ma **non sono stati provati come comandi operativi** nel precedente handoff: usa l'interfaccia dopo avere identificato la run corretta. Non è stato verificato un comando universale di avvio o riparazione: controlla container e configurazione locale prima di intervenire. Non rieseguire script storici di accodamento.
 
 Prima di migrazioni o riparazioni massive, verifica un backup ripristinabile. Il backup più recente è `backups/data-20261003-2032/`: PostgreSQL ripristinato con successo in un database di prova separato il 3 ottobre; otto snapshot Qdrant e archivio del progetto salvati con checksum. Il ripristino Qdrant non è stato provato. È una copia locale sullo stesso computer; dettagli e limiti in [PERFORMANCE_20261004.md](PERFORMANCE_20261004.md). Un backup precedente è `backups/pre-expansion-20260922.dump` (ripristino isolato verificato in passato, non in questa revisione). Non ripristinarlo per un problema della UI o per annullare codice, perché perderesti dati più recenti. Per recupero tecnico, checkpoint storici e rollback del scheduler, vedi [l'archivio tecnico](archive/OFFLINE_HANDOFF_TECHNICAL_20260926.md), [GOVERNOR_SCHEDULER.md](GOVERNOR_SCHEDULER.md) e [CURRENT_STATE.md](CURRENT_STATE.md). Prima di nuovi lavori di sviluppo, controlla di nuovo processi e repository: le run storiche non sono uno stato live.
+
+### Prova temporanea del budget CPU (5 ottobre 2026)
+
+Il timer termico può applicare una lease locale esplicita al solo container
+Ollama di PHDBOT. `var/thermal/cpu-trial.json` conserva ID del container,
+budget originale, budget di prova, scadenza e stato. Il ripristino avviene
+alla ricevuta finale della wave oppure alla scadenza, purché il timer e Docker
+siano disponibili. Non crea pipeline e non modifica limiti impostati nel
+frattempo dall'operatore. È un esperimento, non un controllo adattivo permanente.
+Temperature e durate vanno confrontate tenendo conto delle diverse fonti.

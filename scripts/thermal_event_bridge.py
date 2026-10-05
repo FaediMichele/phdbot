@@ -140,6 +140,15 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO)
     errors = drain(args.project.resolve(), args.base, args.runtime)
     try:
+        try:
+            from scripts.thermal_cpu_trial import tick
+        except ModuleNotFoundError:
+            from thermal_cpu_trial import tick
+        tick(args.project.resolve())
+    except (OSError, ValueError, KeyError, RuntimeError, subprocess.SubprocessError) as exc:
+        LOGGER.error("CPU trial lease check failed: %s", type(exc).__name__)
+        errors += 1
+    try:
         sample(args.project.resolve(), args.api)
     except (OSError, ValueError) as exc:
         LOGGER.error("thermal sample unavailable: %s", type(exc).__name__)
