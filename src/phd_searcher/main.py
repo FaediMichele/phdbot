@@ -17,6 +17,7 @@ from phd_searcher.apis.v1 import routes
 from phd_searcher.dependency import container
 from phd_searcher.service.macro_service import MacroService
 from phd_searcher.service.schedule_service import ScheduleService
+from phd_searcher.thermal import get_thermal_guard
 
 
 def create_app(
@@ -28,6 +29,8 @@ def create_app(
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        thermal = get_thermal_guard()
+        await thermal.start()
         macro_service: MacroService | None = None
         schedule_service: ScheduleService | None = None
         if recover_durable_macros:
@@ -42,6 +45,7 @@ def create_app(
                 await schedule_service.shutdown()
             if macro_service is not None:
                 await macro_service.shutdown()
+            await thermal.shutdown()
 
     app = FastAPI(title=title, version=version, lifespan=lifespan)
     app.state.container = container

@@ -130,3 +130,27 @@ async def test_scheduler_holds_scope_that_became_ambiguous_while_waiting():
     await scheduler._dispatch(50)
     scheduler._fail.assert_awaited_once_with(50, "catalog expansion scope changed; inspect institution before retry")
     pipeline.ensure_scheduled.assert_not_awaited()
+
+
+async def test_governed_activation_preserves_plan_and_duplicate_identity():
+    plan = {
+        'cwd': '/home/giaaaacomo/Progetti/PHDBOT',
+        'objective': 'Validate one new research institution',
+        'expected_result': 'Durable source and search checkpoints',
+        'estimated_seconds': 900,
+        'estimate_basis': 'Rough estimate for three bounded sources',
+        'expires_at': '2026-10-01T12:00:00+02:00',
+        'approved': True, 'requires_codex': False, 'provider_routes_verified': True,
+    }
+    request = ExpansionCreate(institution_ids=[1], governor_plan=plan)
+    uni = institution()
+    service, session, created = setup_service(uni)
+    first = await service.enqueue(request)
+    assert first.schedules[0].governor_plan == request.governor_plan
+    assert created[0].payload['_governor_plan'] == request.governor_plan.model_dump(mode='json')
+    session.commit.assert_awaited_once()
+    service, _, duplicates = setup_service(uni, previous=created[0])
+    second = await service.enqueue(request)
+    assert second.schedules[0].id == first.schedules[0].id
+    assert second.schedules[0].governor_plan == request.governor_plan
+    assert not duplicates

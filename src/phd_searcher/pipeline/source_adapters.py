@@ -19,6 +19,7 @@ from urllib.parse import urljoin, urlsplit
 import httpx
 from bs4 import BeautifulSoup
 
+from phd_searcher.pipeline.bite import fetch_bite_page
 from phd_searcher.pipeline.departmental_sources import DEPARTMENTAL_URLS, departmental_items
 from phd_searcher.pipeline.funding_sources import FUNDING_URLS, funding_items
 from phd_searcher.pipeline.normalize import extract_terms, parse_compensation
@@ -32,7 +33,7 @@ _COPENHAGEN_LISTINGS = frozenset(
         "https://employment.ku.dk/all-vacancies/",
     }
 )
-SUPPORTED_SOURCE_ADAPTERS = frozenset({_TALENTLINK, _TALENTADORE, "departmental", "funding", "workday"})
+SUPPORTED_SOURCE_ADAPTERS = frozenset({_TALENTLINK, _TALENTADORE, "departmental", "funding", "workday", "bite"})
 _ALLOWED_ADAPTER_HOSTS: dict[str, frozenset[str]] = {
     _TALENTLINK: frozenset({"recruitmentplatform.com"}),
     _TALENTADORE: frozenset({"ats.talentadore.com"}),
@@ -340,6 +341,10 @@ async def fetch_source_adapter(
     """Fetch one durable scrape page, or ``None`` for ordinary HTML sources."""
 
     adapter = source_adapter_name(schema)
+    if adapter == "bite":
+        if source_url is None:
+            raise RuntimeError("BITE requires its admitted official source URL")
+        return await fetch_bite_page(source_url, schema.get("bite_listing"), page_number)
     if adapter == "workday":
         if source_url is None:
             raise RuntimeError("Workday requires its admitted source URL")

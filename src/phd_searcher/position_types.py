@@ -31,7 +31,7 @@ _DOCTORAL_FELLOWSHIP_TITLE = re.compile(
 # existing body fallback for generic/multilingual titles not covered here.
 _NAMED_JOB_TITLE = re.compile(
     r"\b(?:developer|officer|specialist|engineer|curator|bioinformatician|"
-    r"team leader|coordinator|manager|administrator|designer|analyst|scientist)\b",
+    r"team leader|group leader|group head|coordinator|manager|administrator|designer|analyst|scientist)\b",
     re.I,
 )
 _PHD_QUALIFICATION_TITLE = re.compile(
@@ -41,7 +41,14 @@ _PHD_QUALIFICATION_TITLE = re.compile(
 )
 
 _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("postdoc", re.compile(r"\bpost[ -]?doc(?:toral)?\b|\bpostdottor", re.I)),
+    # German postdoctoral titles contain "doktorand", also used for PhD
+    # students. Match the complete postdoctoral role before the PhD fallback,
+    # including gender suffixes and separated "Post-Doktorand" forms.
+    ("postdoc", re.compile(
+        r"\bpost[ -]?doc(?:toral)?\b|\bpostdottor|"
+        r"\bpost[ -]?doktor(?:and(?:in(?:nen)?|en)?|al(?:e[rmns]?)?)\b",
+        re.I,
+    )),
     (
         "internship",
         re.compile(
@@ -97,6 +104,7 @@ _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         re.compile(
             r"\bresearcher\b|\bresearch scientist\b|\bresearch engineer\b|\bresearch associate\b|"
             r"\bscientific officer\b|"
+            r"\b(?:research|scientific)\s+group\s+(?:leader|head)\b|"
             r"\bmicroscopist\b|\bimaging specialist\b|"
             r"\b(?:user\s+)?research officer\b|\bbioinformatician\b|"
             r"\b(?:biological|scientific|genomic) curator\b|"

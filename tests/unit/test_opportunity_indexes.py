@@ -1109,3 +1109,14 @@ async def test_index_gate_traversal_services_other_tasks_without_dropping_or_reo
     assert observed == list(range(100))
     assert any(0 < count < 100 for count in checkpoints)
     assert max(b - a for a, b in pairwise(checkpoints)) <= 16
+
+
+@pytest.mark.parametrize('title', ['2016', '2019', '2020', '2027', ' 2026 '])
+def test_year_only_titles_cannot_borrow_shared_recruitment_evidence(title):
+    position = _position(42, VACANCY, listing_page_id=8, screening_status='review', title=title,
+                         description='Applications are open for a doctoral researcher position. Apply by 30 September 2026.')
+    listing = ListingPage(id=8, url='https://university.example/jobs', quality_status='healthy')
+    result = _provisional_gate_decision(position, listing_page=listing, today=date(2026, 9, 26))
+    assert result.reason == 'unusable_year_title'
+    position.title = 'PhD position in immunology — 2026'
+    assert is_provisional_eligible(position, listing_page=listing, today=date(2026, 9, 26))

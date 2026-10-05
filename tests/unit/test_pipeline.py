@@ -282,10 +282,30 @@ def test_runner_full_run(monkeypatch: pytest.MonkeyPatch) -> None:
         assert not r._lock_held  # il lock è rilasciato a fine run
         return r, await r.status()
 
-    _, status = asyncio.run(scenario())
+    runner, status = asyncio.run(scenario())
     assert status.state == "done"
     assert status.stages_done == {"a": 7}
     assert status.stages_pending == []
+    assert runner.rows[1].checkpoints["a"]["performance"]["stage"]["calls"] == 1
+
+
+def test_measurement_accumulates_across_resume_and_failure() -> None:
+    async def scenario() -> dict[str, object]:
+        row = FakeRow(id=1, stages=["discovery"], params={})
+        rows = {1: row}
+        first = FakeProgress(rows, 1, "discovery")
+        async with first.measure("model_completion"):
+            pass
+        resumed = FakeProgress(rows, 1, "discovery")
+        with pytest.raises(ValueError, match="original failure"):
+            async with resumed.measure("model_completion"):
+                raise ValueError("original failure")
+        return row.checkpoints["discovery"]["performance"]
+
+    result = asyncio.run(scenario())
+    assert result["model_completion"]["calls"] == 2
+    assert result["model_completion"]["failures"] == 1
+    assert result["model_completion"]["seconds"] >= 0
 
 
 def test_scheduled_runner_is_idempotent_across_reattachment(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -415,7 +435,8 @@ def test_runner_stop_and_resume(monkeypatch: pytest.MonkeyPatch) -> None:
     assert pending == ["slow", "later"]  # resume ripete lo stadio interrotto
     assert r.rows[1].params == {"limit": 5, "max_pages": 3}  # resume riusa parametri e stessa run
     assert len(r.rows) == 1
-    assert r.rows[1].checkpoints["slow"] == {"next_item": 1}
+    assert r.rows[1].checkpoints["slow"]["next_item"] == 1
+    assert r.rows[1].checkpoints["slow"]["performance"]["stage"]["calls"] == 2
     assert r.rows[1].state == "done"
 
 

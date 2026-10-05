@@ -22,11 +22,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from phd_searcher.config import Settings
 from phd_searcher.database.models.listing_page import ListingPage
 from phd_searcher.database.models.university import University
+from phd_searcher.pipeline.bite import bite_listing
 from phd_searcher.pipeline.discovery import _same_site
 from phd_searcher.pipeline.funding_sources import FUNDING_URLS, funding_items
 from phd_searcher.pipeline.listing_render import ListingRenderError, listing_render_selector, render_wait_options
 from phd_searcher.pipeline.progress import Progress
-from phd_searcher.pipeline.retry import retry_async
+from phd_searcher.pipeline.retry import RetryInterruptedError, retry_async
 from phd_searcher.pipeline.schema_quality import (
     repair_base_anchor_url_schema,
     schema_quality_issues,
@@ -236,6 +237,7 @@ async def _generate_schema_with_tools(
     *,
     expected_fields: list[str] | None = None,
     max_attempts: int = 4,
+    progress: Progress | None = None,
 ) -> dict[str, object]:
     """Genera e valida lo schema con tool feedback, senza structured output."""
     compact_html = preprocess_html_for_schema(
@@ -254,8 +256,16 @@ async def _generate_schema_with_tools(
     missing_tool_responses = 0
 
     for attempt in range(1, max_attempts + 1):
+        if progress is not None:
+            await progress.check_stop()
+            if progress.should_stop:
+                raise RetryInterruptedError("stopped before schema model request")
         try:
-            message, calls, native_ollama = await _complete_with_tools(llm_config, messages)
+            if progress is None:
+                message, calls, native_ollama = await _complete_with_tools(llm_config, messages)
+            else:
+                async with progress.measure("model_completion"):
+                    message, calls, native_ollama = await _complete_with_tools(llm_config, messages)
         except httpx.HTTPStatusError as exc:
             transport_error = (
                 f"Ollama rejected the tool response: HTTP {exc.response.status_code}: {exc.response.text[:500]}"
@@ -474,9 +484,10 @@ async def run(
                             raise ListingRenderError(result.error_message or "dynamic listing did not render")
                     target = result.redirected_url or page.url
                     source_html = result.html or ""
+                    bite_marker = bite_listing(source_html) if uni is not None and _same_site(target, uni.website_url) else None
                     state = page_state(source_html, result.redirected_status_code or result.status_code)
                     reason = f"source_preflight:{state}" if state else ""
-                    if state is None and listing_body_missing(source_html):
+                    if state is None and not bite_marker and listing_body_missing(source_html):
                         state, reason = "deferred", "source_preflight:missing_content"
                     if state is None and staff_directory_evidence(source_html):
                         state, reason = "deferred", "source_preflight:staff_directory"
@@ -510,6 +521,14 @@ async def run(
                         page.quality_checked_at = datetime.now(UTC).replace(tzinfo=None)
                         print(f"schema_gen: skipped model work for {page.url}: {reason}")
                         raise SchemaDeferredError(reason)
+                    if bite_marker:
+                        page.extraction_schema = {"adapter": "bite", "bite_listing": bite_marker, "baseSelector": "body", "fields": []}
+                        page.schema_status = "ok"
+                        page.quality_status = "unknown"
+                        page.quality_reason = None
+                        generated += 1
+                        print(f"schema_gen: prepared embedded BITE adapter without LLM for {page.url}")
+                        raise _SchemaPreparedError
                     if page.url in FUNDING_URLS:
                         funding_items(source_html, page.url)  # Revalidate today's DOM before reusing the adapter.
                         page.extraction_schema = {"adapter": "funding", "baseSelector": "main", "fields": []}
@@ -547,6 +566,7 @@ async def run(
                                 current_query,
                                 llm_config,
                                 expected_fields=current_expected_fields,
+                                progress=progress,
                             )
 
                         schema = await retry_async(

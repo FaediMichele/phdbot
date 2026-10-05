@@ -37,7 +37,8 @@ async def select_listings(
         if progress.should_stop:
             raise RetryInterruptedError("stopped during discovery selection")
         try:
-            message = await model.complete_with_tools(messages, [tool])
+            async with progress.measure("model_completion"):
+                message = await model.complete_with_tools(messages, [tool])
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code != 400:
                 raise  # transport/rate-limit failures belong to durable retries

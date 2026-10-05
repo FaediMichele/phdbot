@@ -1,5 +1,7 @@
 from datetime import date
 
+import pytest
+
 from phd_searcher.pipeline.normalize import (
     extract_deadline,
     extract_research_group,
@@ -288,3 +290,26 @@ def test_explicit_deadlines_survive_start_asides_and_reparse():
 def test_parenthetical_application_deadline_is_not_a_start_aside():
     assert parse_deadline("Apply (deadline 31 October 2026)") == date(2026, 10, 31)
     assert extract_deadline("Apply (application deadline 31 October 2026)")[1] == date(2026, 10, 31)
+
+
+@pytest.mark.parametrize('reference_date', ['01.10.2026', '19.10.2026', '19.10.2027'])
+def test_application_submission_deadline_excludes_reference_letters(reference_date):
+    text = (
+        'The deadline for submitting your application is 12.10.2026. '
+        f'The deadline for receiving the reference letters is {reference_date}. '
+        'Selection symposium in February 2027.'
+    )
+    raw, deadline = extract_deadline(text)
+    assert deadline == date(2026, 10, 12)
+    assert parse_deadline(raw) == deadline
+    assert reference_date not in raw
+
+
+@pytest.mark.parametrize('text', [
+    'The deadline for receiving the reference letters is 19.10.2026',
+    'Reference letters deadline: 19.10.2026',
+    'Deadline for submitting the manuscript is 12.10.2026',
+    'Deadline for submitting your application is October 12. Reference letters deadline: 19.10.2026',
+])
+def test_reference_or_unrelated_deadlines_do_not_supply_application_dates(text):
+    assert extract_deadline(text) == (None, None)

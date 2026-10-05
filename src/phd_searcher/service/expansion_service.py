@@ -147,6 +147,8 @@ class ExpansionService:
                 body = _pipeline(uni.name, request)
                 payload = body.model_dump(mode="json", by_alias=True, exclude_none=True)
                 payload["expansion_institution_id"] = uni.id
+                if request.governor_plan is not None:
+                    payload["_governor_plan"] = request.governor_plan.model_dump(mode="json")
                 job = ScheduledJob(target="pipeline", state="scheduled", run_at=_utcnow() + timedelta(seconds=10),
                                    timezone="Europe/Rome", payload=payload, attempts=0)
                 uni.discovery_status = "pending"

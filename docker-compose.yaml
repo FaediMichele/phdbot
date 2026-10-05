@@ -9,7 +9,19 @@ services:
       - .env
     volumes:
       - ./exports:/app/exports
+      # Directory mount sees atomic state-file replacements; no credentials mounted.
+      - ${PHDBOT_GOVERNOR_STATE_DIR:-/home/giaaaacomo/.local/share/codex-governor-app/live-state}:/run/codex-governor:ro
     environment:
+      PHDBOT_GOVERNOR_STATE_FILE: /run/codex-governor/state.json
+      # Kernel CPU sensors are read-only in Docker's existing /sys mount.
+      PHDBOT_THERMAL_ENABLED: "${PHDBOT_THERMAL_ENABLED:-true}"
+      PHDBOT_THERMAL_EVENT_DIR: /app/exports/thermal-events
+      PHDBOT_THERMAL_NOTIFY_PAUSES: "${PHDBOT_THERMAL_NOTIFY_PAUSES:-true}"
+      PHDBOT_THERMAL_PAUSE_C: "${PHDBOT_THERMAL_PAUSE_C:-95}"
+      PHDBOT_THERMAL_RESUME_C: "${PHDBOT_THERMAL_RESUME_C:-85}"
+      PHDBOT_THERMAL_CRITICAL_C: "${PHDBOT_THERMAL_CRITICAL_C:-102}"
+      PHDBOT_THERMAL_HOT_SECONDS: "${PHDBOT_THERMAL_HOT_SECONDS:-60}"
+      PHDBOT_THERMAL_COOL_SECONDS: "${PHDBOT_THERMAL_COOL_SECONDS:-30}"
       # Override the DB host to reach the compose service (env_file points at localhost).
       PHD_SEARCHER__DATABASE__URL: postgresql+asyncpg://app:app@postgres:5432/app
       PHD_SEARCHER__QDRANT__URL: http://qdrant:6333

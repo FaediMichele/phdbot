@@ -284,6 +284,7 @@
     <div class="card">
       <h2>Status</h2>
       <div id="pstatus" class="muted">loading…</div>
+      <p id="thermal-status" class="muted" aria-live="polite"></p>
     </div>
     <div class="card">
       <h2>Controls</h2>
@@ -762,6 +763,13 @@ function renderStatus(st) {
 }
 
 async function poll() {
+  try {
+    const t = await api("/v1/pipeline/thermal");
+    const temp = t.cpu_c == null ? "unavailable" : `${t.cpu_c.toFixed(1)} °C`;
+    $("#thermal-status").textContent = !t.enabled ? "CPU thermal guard disabled" :
+      `CPU ${temp} · ${t.blocked ? "Cooling hold: new work waits; the current operation may still be finishing." : "Thermal guard active."} ` +
+      `Pause at ${t.config.pause_c} °C for ${t.config.hot_seconds}s; resume below ${t.config.resume_c} °C for ${t.config.cool_seconds}s. GPU not monitored.`;
+  } catch { $("#thermal-status").textContent = "Thermal guard status unavailable"; }
   try {
     await api("/health");
     $("#health").className = "dot ok"; $("#health").title = "API healthy";

@@ -15,6 +15,7 @@ from phd_searcher.service.feedback_service import FeedbackService
 from phd_searcher.service.macro_service import MacroService
 from phd_searcher.service.schedule_service import ScheduleService
 from phd_searcher.service.search_service import SearchService
+from phd_searcher.thermal import get_thermal_guard
 from phd_searcher.typedef.expansion import ExpansionCreate, ExpansionPreview, ExpansionQueued
 from phd_searcher.typedef.feedback import PositionFeedbackCreate, PositionFeedbackView
 from phd_searcher.typedef.macro import MacroCreate, MacroRunView, MacroView
@@ -36,6 +37,11 @@ from phd_searcher.typedef.search import (
 )
 
 router = APIRouter(prefix="/v1")
+
+
+@router.get("/pipeline/thermal")
+async def pipeline_thermal() -> dict[str, object]:
+    return get_thermal_guard().status()
 
 
 def _service[T](cls: type[T]) -> DependsParam:

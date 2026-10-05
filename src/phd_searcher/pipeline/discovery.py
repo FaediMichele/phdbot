@@ -6,6 +6,7 @@ sitemap.xml → navigazione jobs/hub entro un budget fisso di quattro pagine.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
@@ -185,6 +186,31 @@ class _Link:
         self.referrer = referrer
 
 
+def _discovery_page_url(url: str) -> bool:
+    """Keep web pages, excluding share actions that merely embed a jobs URL."""
+    try:
+        parsed = urlsplit(url)
+    except ValueError:
+        return False
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        return False
+    host = parsed.hostname.casefold().removeprefix("www.")
+    path = parsed.path.casefold().rstrip("/")
+    share_paths = {
+        "facebook.com": {"/sharer.php", "/sharer/sharer.php"},
+        "linkedin.com": {"/sharing/share-offsite", "/sharearticle"},
+        "reddit.com": {"/submit"},
+        "twitter.com": {"/intent/tweet", "/share"},
+        "x.com": {"/intent/tweet", "/share"},
+        "xing.com": {"/spi/shares/new"},
+        "t.me": {"/share/url"},
+        "api.whatsapp.com": {"/send"},
+    }
+    if path in share_paths.get(host, set()):
+        return False
+    return is_listing_page_url(url)
+
+
 def _candidates(links: list[dict[str, str | None]], referrer: str = "") -> list[_Link]:
     out: list[_Link] = []
     seen: set[str] = set()
@@ -196,7 +222,7 @@ def _candidates(links: list[dict[str, str | None]], referrer: str = "") -> list[
         if (
             href
             and href not in seen
-            and is_listing_page_url(href)
+            and _discovery_page_url(href)
             and (project_listing or any(k in haystack for k in _KEYWORDS))
         ):
             seen.add(href)
@@ -209,7 +235,7 @@ def _hub_links(links: list[dict[str, str | None]]) -> list[str]:
     for link in links:
         href = link.get("href") or ""
         haystack = f"{href} {link.get('text') or ''}".lower()
-        if not href.startswith("http") or not is_listing_page_url(href) or any(x in haystack for x in _HUB_EXCLUDE):
+        if not _discovery_page_url(href) or any(x in haystack for x in _HUB_EXCLUDE):
             continue
         if any(k in haystack for k in (*_HUB_KEYWORDS, *_RECRUITMENT_HUB_KEYWORDS)):
             priority = 0 if any(k in haystack for k in _RECRUITMENT_HUB_KEYWORDS) else 1
@@ -324,7 +350,28 @@ async def _collect_candidates(
     Tutti i livelli sempre: i candidati della sola homepage sono spesso pagine
     informative che l'LLM scarta, mentre il listing vero è un hop più in là.
     """
-    groups = [_candidates(links, website_url), await _sitemap_candidates(website_url)]
+    # The sitemap and jobs-hub traversal depend only on the observed homepage.
+    # Overlap their I/O; retain the original group order and both budgets.
+    async with asyncio.TaskGroup() as tasks:
+        sitemap = tasks.create_task(_sitemap_candidates(website_url))
+        hubs = tasks.create_task(_hub_candidates(crawler, config, website_url, links))
+    groups = [_candidates(links, website_url), sitemap.result(), *hubs.result()]
+    merged = _merge_candidate_groups(groups)
+    for candidate in merged:
+        # A duplicate link from a homepage/sitemap must not erase stronger
+        # provenance subsequently observed on an official recruitment hub.
+        if not _retained_recruitment_board(candidate, website_url):
+            for group in groups:
+                for observed in group:
+                    if observed.href == candidate.href and _retained_recruitment_board(observed, website_url):
+                        candidate.referrer = observed.referrer
+    return merged
+
+
+async def _hub_candidates(
+    crawler: AsyncWebCrawler, config: CrawlerRunConfig, website_url: str, links: list[dict[str, str | None]]
+) -> list[list[_Link]]:
+    groups: list[list[_Link]] = []
     pending = _hub_links(links)
     visited = {website_url}
     fetched = 0
@@ -353,16 +400,7 @@ async def _collect_candidates(
             )]
             nested = [url for url in _hub_links(recruitment_links) if url not in visited]
             pending = list(dict.fromkeys([*nested, *pending]))
-    merged = _merge_candidate_groups(groups)
-    for candidate in merged:
-        # A duplicate link from a homepage/sitemap must not erase stronger
-        # provenance subsequently observed on an official recruitment hub.
-        if not _retained_recruitment_board(candidate, website_url):
-            for group in groups:
-                for observed in group:
-                    if observed.href == candidate.href and _retained_recruitment_board(observed, website_url):
-                        candidate.referrer = observed.referrer
-    return merged
+    return groups
 
 
 def _merge_candidate_groups(groups: list[list[_Link]]) -> list[_Link]:

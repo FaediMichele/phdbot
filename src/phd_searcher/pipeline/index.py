@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
+from collections import OrderedDict
 from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time
@@ -107,6 +109,52 @@ VerificationMetadata = tuple[
     int,
     tuple[UncertaintyFlag, ...],
 ]
+
+
+class _VerificationCache:
+    """Process-local reuse for identical ORM snapshots on the same local day.
+
+    Keys cover every persisted position/source field, including evidence,
+    screening verdicts and source health. Only hashes and immutable results are
+    retained, never ORM objects or document text. Restart/code deployment and
+    day rollover invalidate reuse; eviction only costs a fresh evaluation.
+    """
+
+    def __init__(self, max_entries: int = 32_768) -> None:
+        self.max_entries = max_entries
+        self.entries: OrderedDict[bytes, VerificationMetadata | None] = OrderedDict()
+        self.day: date | None = None
+        self.hits = 0
+        self.misses = 0
+
+    def assess(
+        self, position: Position, today: date, *, listing_page: ListingPage | None = None,
+    ) -> VerificationMetadata | None:
+        if self.day != today:
+            self.entries.clear()
+            self.day = today
+        snapshot = [
+            [getattr(position, column.key) for column in Position.__table__.columns],
+            None if listing_page is None else [
+                getattr(listing_page, column.key) for column in ListingPage.__table__.columns
+            ],
+        ]
+        key = hashlib.sha256(json.dumps(
+            snapshot, sort_keys=True, separators=(",", ":"), default=str,
+        ).encode()).digest()
+        if key in self.entries:
+            self.hits += 1
+            self.entries.move_to_end(key)
+            return self.entries[key]
+        self.misses += 1
+        result = _verification_metadata(position, today, listing_page=listing_page)
+        self.entries[key] = result
+        if len(self.entries) > self.max_entries:
+            self.entries.popitem(last=False)
+        return result
+
+
+_VERIFICATION_CACHE = _VerificationCache()
 ProvisionalAssessment = tuple[int, tuple[UncertaintyFlag, ...]]
 FamilySignalPayload = tuple[str | None, int]
 # These are deliberately interpretable heuristic tiers, not probabilities.
@@ -477,6 +525,10 @@ def _provisional_gate_decision(
         position,
         today=current_day,
     )
+    # A year-only row cannot identify an opportunity. Shared recruitment
+    # prose must not rescue bibliography/archive headings as provisional leads.
+    if len(title.strip()) == 4 and title.strip().isascii() and title.strip().isdigit():
+        return ProvisionalGateDecision(None, "unusable_year_title")
     url = str(getattr(position, "url", "") or "")
     status_conflict = has_future_deadline_status_conflict(
         str(getattr(position, "description", "") or ""),
@@ -1194,13 +1246,20 @@ async def run(
         provisional_indexed = (
             await session.execute(_provisional_indexed_stmt(today))
         ).all()
-        async for position, listing_page in _cooperative_rows(provisional_indexed):
-            if _verification_metadata(
-                position,
-                listing_page=listing_page,
-                today=today,
-            ) is None:
-                unsearchable[position.id] = position
+        cache_hits, cache_misses = _VERIFICATION_CACHE.hits, _VERIFICATION_CACHE.misses
+        async with progress.measure("existing_verification"):
+            async for position, listing_page in _cooperative_rows(provisional_indexed):
+                if _VERIFICATION_CACHE.assess(
+                    position,
+                    listing_page=listing_page,
+                    today=today,
+                ) is None:
+                    unsearchable[position.id] = position
+        print(
+            "index: existing verification reused "
+            f"{_VERIFICATION_CACHE.hits - cache_hits}, evaluated "
+            f"{_VERIFICATION_CACHE.misses - cache_misses}"
+        )
         if unsearchable:
             for position in unsearchable.values():
                 position.indexed_at = None

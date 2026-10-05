@@ -1,0 +1,10 @@
+[Unit]
+Description=Observe explicitly registered PHDBOT wave completion
+
+[Timer]
+OnStartupSec=15
+OnUnitInactiveSec=60
+AccuracySec=5
+
+[Install]
+WantedBy=timers.target

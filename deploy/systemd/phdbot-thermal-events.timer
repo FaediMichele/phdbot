@@ -1,0 +1,10 @@
+[Unit]
+Description=Forward PHDBOT thermal observations while pipelines run
+
+[Timer]
+OnStartupSec=15
+OnUnitInactiveSec=10
+AccuracySec=1
+
+[Install]
+WantedBy=timers.target

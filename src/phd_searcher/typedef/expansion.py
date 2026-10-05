@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from phd_searcher.typedef.schedule import ScheduleView
+from phd_searcher.typedef.schedule import GovernorPlan, ScheduleView
 
 
 class ExpansionCandidate(BaseModel):
@@ -28,6 +28,7 @@ class ExpansionCreate(BaseModel):
     institution_ids: list[int] = Field(min_length=1, max_length=10)
     max_sources: int = Field(default=3, ge=1, le=5)
     max_pages: int = Field(default=3, ge=1, le=5)
+    governor_plan: GovernorPlan | None = None
 
     @field_validator("institution_ids")
     @classmethod
