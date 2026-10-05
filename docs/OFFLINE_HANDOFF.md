@@ -124,3 +124,11 @@ illimitato sono quindi rifiutate prima della modifica. Una lease precedente
 può risultare `recovery_required`: non ripetere il comando, non rilanciare la
 wave; ricreare il solo container interessato dopo autorizzazione e verifica
 della coda vuota. Conservare il volume dei modelli e usare l'immagine locale.
+
+Ripristino completato il 5 ottobre alle 09:20 dopo autorizzazione: solo Ollama
+ricreato, modelli conservati, salute verificata e quota CPU effettivamente
+illimitata. La lease precedente è restored. Non rieseguire il recovery.
+L'overlay locale di recupero avvia direttamente `ollama serve` senza download;
+l'avvio Compose ordinario mantiene invece il suo entrypoint originale.
+[Ricerca termica e prossima prova proposta](THERMAL_OPTIONS_20261005.md): nessuna
+nuova impostazione energetica host applicata, nessuna wave duplicata.

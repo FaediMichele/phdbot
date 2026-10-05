@@ -297,3 +297,7 @@ Env vars, prefix `PHD_SEARCHER__`, nested with `__`. See `.env.example`.
 - `config/` — pydantic-settings. `typedef/` — request/response models + shared types (pure data). `dependency/` — injector modules. `engine/` — `ModelHelper` (litellm) + prompt rendering. `service/` — business logic. `apis/v1/` — routes. `database/` — SQLAlchemy models + Alembic.
 - `tests/unit/` — fast, mocked. `tests/integration/` — separate uv project, spins docker compose.
 - `Makefile` — dev tasks.
+
+Thermal tuning: the [measured CPU-budget comparison](docs/THERMAL_TRIAL_20261005.md)
+and [hardware-specific research and proposed next test](docs/THERMAL_OPTIONS_20261005.md)
+distinguish verified recovery from untested power-management options.

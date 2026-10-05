@@ -31,3 +31,9 @@ idle Ollama container with its persistent model volume retained.
 
 Artifacts are local and ignored: var/thermal-20261004/final-*.json and
 var/thermal-20261005/final-*.json. Final trial schedules3659–3678, runs3799–3818.
+
+Recovery completed with user authorization on 5 October at 09:20. The idle
+Ollama container was recreated with the same image and persistent model volume;
+health, unchanged model inventory, NanoCpus=0 and cpu.max=`max 100000` verified.
+The lease is restored. See [thermal options research](THERMAL_OPTIONS_20261005.md)
+for the next proposed comparison; no new trial was launched.
