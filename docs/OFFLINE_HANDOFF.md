@@ -117,3 +117,10 @@ alla ricevuta finale della wave oppure alla scadenza, purché il timer e Docker
 siano disponibili. Non crea pipeline e non modifica limiti impostati nel
 frattempo dall'operatore. È un esperimento, non un controllo adattivo permanente.
 Temperature e durate vanno confrontate tenendo conto delle diverse fonti.
+
+Correzione verificata il 5 ottobre: il ripristino automatico vale solo per un
+budget positivo preesistente. Docker ignora `--cpus 0`; nuove prove da budget
+illimitato sono quindi rifiutate prima della modifica. Una lease precedente
+può risultare `recovery_required`: non ripetere il comando, non rilanciare la
+wave; ricreare il solo container interessato dopo autorizzazione e verifica
+della coda vuota. Conservare il volume dei modelli e usare l'immagine locale.

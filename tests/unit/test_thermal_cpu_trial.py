@@ -7,9 +7,9 @@ import pytest
 from scripts import thermal_cpu_trial as trial
 
 
-def setup_trial(tmp_path, monkeypatch, state="applying", current=0):
+def setup_trial(tmp_path, monkeypatch, state="applying", current=8_000_000_000):
     now = datetime(2026, 10, 5, tzinfo=UTC)
-    record = {"container_id": "a" * 64, "original_nano_cpus": 0,
+    record = {"container_id": "a" * 64, "original_nano_cpus": 8_000_000_000,
               "target_nano_cpus": 4_000_000_000, "completion_event": "wave-cpu-test",
               "created_at": now.isoformat(), "expires_at": (now + timedelta(hours=2)).isoformat(),
               "state": state}
@@ -34,7 +34,7 @@ def test_apply_then_expire_restores_and_never_reapplies(tmp_path, monkeypatch):
     assert actual["HostConfig"]["NanoCpus"] == 4_000_000_000
     assert trial.advance(path, tmp_path, now=now + timedelta(hours=3))["state"] == "restored"
     trial.advance(path, tmp_path, now=now + timedelta(hours=4))
-    assert [c[1] for c in calls] == [4_000_000_000, 0]
+    assert [c[1] for c in calls] == [4_000_000_000, 8_000_000_000]
 
 
 def test_crash_after_docker_apply_does_not_repeat_mutation(tmp_path, monkeypatch):
@@ -56,7 +56,7 @@ def test_completed_wave_restores_early(tmp_path, monkeypatch):
     receipt.write_text(json.dumps({"kind": "wave_terminal", "status": "done",
                                    "jobs": [{"state": "done", "finished_at": now.isoformat()}]}))
     assert trial.advance(path, tmp_path, now=now)["state"] == "restored"
-    assert [c[1] for c in calls] == [0]
+    assert [c[1] for c in calls] == [8_000_000_000]
 
 
 @pytest.mark.parametrize("current", [0, 2_000_000_000])
@@ -78,7 +78,7 @@ def test_wrong_container_identity_is_rejected(tmp_path, monkeypatch):
 def test_restore_interruption_retries_original_budget(tmp_path, monkeypatch):
     path, now, actual, calls = setup_trial(tmp_path, monkeypatch, state="restoring", current=4_000_000_000)
     assert trial.advance(path, tmp_path, now=now)["state"] == "restored"
-    assert actual["HostConfig"]["NanoCpus"] == 0
+    assert actual["HostConfig"]["NanoCpus"] == 8_000_000_000
     assert len(calls) == 1
 
 
@@ -89,4 +89,24 @@ def test_invalid_expiry_or_budget_rejected(tmp_path, monkeypatch):
     trial.save(path, data)
     with pytest.raises(ValueError, match="six hours"):
         trial.advance(path, tmp_path, now=now)
+    assert calls == []
+
+
+def test_unlimited_budget_is_rejected_before_mutation(tmp_path, monkeypatch):
+    path, now, _, calls = setup_trial(tmp_path, monkeypatch, current=0)
+    record = json.loads(path.read_text())
+    record["original_nano_cpus"] = 0
+    trial.save(path, record)
+    with pytest.raises(ValueError, match="unlimited"):
+        trial.advance(path, tmp_path, now=now)
+    assert calls == []
+
+
+def test_legacy_unlimited_lease_requires_explicit_recovery(tmp_path, monkeypatch):
+    path, now, _, calls = setup_trial(tmp_path, monkeypatch, state="restoring", current=4_000_000_000)
+    record = json.loads(path.read_text())
+    record["original_nano_cpus"] = 0
+    trial.save(path, record)
+    assert trial.advance(path, tmp_path, now=now)["state"] == "recovery_required"
+    assert trial.advance(path, tmp_path, now=now)["state"] == "recovery_required"
     assert calls == []

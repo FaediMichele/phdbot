@@ -111,8 +111,11 @@ thresholds are Compose environment variables; see `docker-compose.yaml`.
 Temporary CPU-budget experiments are optional: `scripts/thermal_cpu_trial.py`
 uses an explicitly prepared local lease in `var/thermal/cpu-trial.json` to limit
 only the original PHDBOT Ollama container. The same thermal timer restores its
-previous budget at the registered wave's completion or lease expiry (at most
-six hours), and preserves competing operator changes. It never launches jobs.
+previous positive budget at the registered wave's completion or lease expiry
+(at most six hours), and preserves competing operator changes. Trials starting
+from an unlimited budget are rejected: Docker ignores `--cpus 0` during update.
+Legacy leases in that situation enter `recovery_required`; restoring the exact
+unlimited configuration requires an explicitly authorized container recreation. It never launches jobs.
 The timer and Docker access must remain available for automatic restoration;
 a restart resumes lease reconciliation. No adaptive CPU throttling is enabled
 by default, and a lower CPU budget has not yet been shown to improve throughput.

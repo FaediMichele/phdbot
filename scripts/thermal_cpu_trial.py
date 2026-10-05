@@ -29,6 +29,8 @@ def inspect(container: str) -> dict[str, Any]:
 
 
 def update(container: str, nano_cpus: int) -> None:
+    if nano_cpus <= 0:
+        raise ValueError("Docker cannot clear NanoCpus in place; container recovery required")
     subprocess.run(["docker", "update", "--cpus", str(nano_cpus / 1_000_000_000), container],
                    check=True, capture_output=True, timeout=10)
 
@@ -69,7 +71,7 @@ def completion_received(project: Path, event: str) -> bool:
 def advance(path: Path, project: Path, *, now: datetime) -> dict[str, Any]:
     record = json.loads(path.read_text())
     validate(record)
-    if record["state"] in {"restored", "conflict"}:
+    if record["state"] in {"restored", "conflict", "recovery_required"}:
         return record
     if record["state"] not in {"applying", "active", "restoring"}:
         raise ValueError("invalid lease state")
@@ -88,6 +90,12 @@ def advance(path: Path, project: Path, *, now: datetime) -> dict[str, Any]:
         return record
     expired = now >= datetime.fromisoformat(record["expires_at"])
     finished = False if expired else completion_received(project, record["completion_event"])
+    if original == 0 and current == target:
+        record.update(state="recovery_required", reason="Docker ignores --cpus 0; authorized container recreation required")
+        save(path, record)
+        return record
+    if original == 0 and record["state"] == "applying" and not expired:
+        raise ValueError("Cannot reversibly cap an unlimited NanoCpus budget")
     restore = record["state"] == "restoring" or expired or finished
     if restore:
         record.update(state="restoring", restore_reason="completion" if finished else "expiry_or_manual")
