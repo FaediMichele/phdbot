@@ -105,3 +105,19 @@ Nessuna wave o benchmark lanciato per questa ricerca. La prossima unità utile �
 implementare e testare il controller in isolamento e verificare la cancellazione,
 non modificare profili del PC. Il miglioramento termico e l'eventuale beneficio
 sui tempi restano da misurare: la sicurezza può richiedere anche più tempo totale.
+
+## Caso osservato: run 3817
+
+La run 3817 (Laboratoire des Matériaux et du Génie Physique) aveva tre
+pagine sorgente selezionate per lo schema, due schemi generati e uno fallito
+dopo quattro tentativi di validazione. Il checkpoint registra otto chiamate
+al modello per lo stadio schema (516,733 s), 650,125 s nello stadio, due
+attese termiche durante schema (126,039 s) e una durante scrape (65,616 s).
+La run si è conclusa con stato `done`; le pause non sono retry della run.
+La causa immediata delle ripetizioni è il lavoro lungo di generazione e
+correzione su fonti diverse, non una prova che una pagina contenesse molti
+schemi. Ricevute di pausa e snapshot sono in `var/thermal-20261005/`.
+
+Per questo caso sarebbe promettente evitare tentativi ripetuti quando lo
+schema non trova i titoli e riprendere le altre fonti; le prove termiche
+servono a controllare il rischio residuo delle singole chiamate lunghe.

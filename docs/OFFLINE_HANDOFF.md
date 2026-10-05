@@ -137,3 +137,13 @@ Priorità aggiornata: modulare PHDBOT senza cambiare impostazioni del PC.
 Il guard attuale attende confini sicuri e non interrompe una generazione già
 in corso; il nuovo controller è ancora una proposta. Vedi la
 [ricerca applicativa](THERMAL_APPLICATION_CONTROL_20261005.md).
+
+5 ottobre, 13:05: UI aggiornata nel container API senza riavvio. I bandi salvati
+con scadenza passata sono in un gruppo chiuso; tab User è segnaposto senza
+dati personali. Il file precedente è
+`var/release-20261005/index-before.html`. La copia live non sopravvive alla
+ricreazione del container senza rebuild immagine. La release a copertura ampia
+richiede la maggioranza delle fonti sane ricercabile, come definito in
+[RELEASE_COVERAGE_20261005.md](RELEASE_COVERAGE_20261005.md). Coda vuota: la
+run index limitata avrebbe cancellazione globale di vettori stale, da
+verificare prima; nessuna nuova wave avviata.

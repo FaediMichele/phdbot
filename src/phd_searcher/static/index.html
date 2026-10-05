@@ -197,7 +197,12 @@
   .calendar-date { display: block; margin-bottom: 4px; font-size: 11px; }
   .calendar-event { display: block; margin: 3px 0; padding: 2px 4px; border-radius: 4px; background: color-mix(in srgb, var(--accent) 13%, transparent);
     color: var(--text); font-size: 10px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .calendar-event.expired { background: color-mix(in srgb, var(--muted) 12%, transparent); color: var(--muted); opacity: .7; }
   .calendar-more { color: var(--muted); font-size: 10px; }
+  .saved-expired { margin-top: 16px; }
+  .saved-expired > summary { cursor: pointer; color: var(--muted); font-weight: 650; }
+  .saved-expired .hit { opacity: .72; }
+  .saved-expired .hit:focus-within, .saved-expired .hit:hover { opacity: 1; }
   .saved-empty { padding: 28px 12px; text-align: center; color: var(--muted); }
   .muted { color: var(--muted); }
   .screen-badge { display:inline-block; border-radius:12px; padding:1px 8px; font-size:11px; font-weight:600; color:var(--status-fg); }
@@ -276,6 +281,7 @@
   <button id="tab-review" role="tab" aria-controls="review" aria-selected="false" tabindex="-1" data-tab="review" title="Inspect or decide candidates that need human attention">Review</button>
   <button id="tab-search" role="tab" aria-controls="search" aria-selected="false" tabindex="-1" data-tab="search" title="Search indexed opportunities by meaning and structured filters">Search</button>
   <button id="tab-saved" role="tab" aria-controls="saved" aria-selected="false" tabindex="-1" data-tab="saved" title="Review and organize opportunities saved in this browser">Saved <span id="saved-nav-count" aria-label="saved opportunities"></span></button>
+  <button id="tab-user" role="tab" aria-controls="user" aria-selected="false" tabindex="-1" data-tab="user" title="Your profile and future search preferences">User</button>
   <button id="tab-macros" role="tab" aria-controls="macros" aria-selected="false" tabindex="-1" data-tab="macros" title="Save repeatable refresh, search and export workflows">Macros</button>
 </nav>
 <main>
@@ -535,7 +541,18 @@
         </div>
       </details>
     </div>
-    <div class="card"><div id="saved-items" aria-live="polite"></div></div>
+    <div class="card">
+      <div id="saved-items" aria-live="polite"></div>
+      <details id="saved-expired" class="saved-expired" hidden>
+        <summary>Expired deadlines <span id="saved-expired-count"></span></summary>
+        <div id="saved-expired-items"></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- USER -->
+  <section id="user" class="tab" role="tabpanel" aria-labelledby="tab-user" hidden>
+    <div class="card"><h2>User</h2><p class="muted">Profile and personalized search are planned for a future release.</p></div>
   </section>
 
   <!-- MACROS -->
@@ -1453,6 +1470,10 @@ function populateSavedFacets() {
 function localDateKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
+function savedDeadlineExpired(record, today = localDateKey(new Date())) {
+  const deadline = String(record.hit.deadline || "").slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(deadline) && deadline < today;
+}
 function renderSavedCalendar(records) {
   const withDeadlines = records.filter(record => record.hit.deadline);
   const withoutDeadline = records.length - withDeadlines.length;
@@ -1476,7 +1497,7 @@ function renderSavedCalendar(records) {
     const today = key === localDateKey(new Date());
     const links = events.slice(0, 3).map(record => {
       const hit = record.hit;
-      return `<a class="calendar-event" href="${esc(safeHref(hit.url))}" target="_blank" rel="noopener" onclick="markResultViewed(${Number(hit.position_id)},'source')" title="${esc(hit.title)} · ${esc(hit.university || "—")}">${esc(hit.title)}</a>`;
+      return `<a class="calendar-event${savedDeadlineExpired(record) ? " expired" : ""}" href="${esc(safeHref(hit.url))}" target="_blank" rel="noopener" onclick="markResultViewed(${Number(hit.position_id)},'source')" title="${esc(hit.title)} · ${esc(hit.university || "—")}">${esc(hit.title)}</a>`;
     }).join("");
     cells.push(`<div class="calendar-day${outside ? " outside" : ""}${today ? " today" : ""}" data-date="${key}"><span class="calendar-date">${date.getDate()}</span>${links}${events.length > 3 ? `<span class="calendar-more">+${events.length - 3} more</span>` : ""}</div>`);
   }
@@ -1505,8 +1526,13 @@ function renderSaved() {
   const total = Object.keys(savedPositions).length;
   $("#saved-count").textContent = `${records.length}${records.length !== total ? ` of ${total}` : ""} saved`;
   renderSavedCalendar(records);
-  $("#saved-items").innerHTML = records.length ? records.map(renderSavedItem).join("")
-    : `<div class="saved-empty">${total ? "No saved opportunities match these filters." : "Save an opportunity from Search to build your shortlist."}</div>`;
+  const current = records.filter(record => !savedDeadlineExpired(record));
+  const expired = records.filter(savedDeadlineExpired);
+  $("#saved-items").innerHTML = current.length ? current.map(renderSavedItem).join("")
+    : `<div class="saved-empty">${records.length ? "No saved opportunities with a current or unknown deadline match these filters." : total ? "No saved opportunities match these filters." : "Save an opportunity from Search to build your shortlist."}</div>`;
+  $("#saved-expired").hidden = expired.length === 0;
+  $("#saved-expired-count").textContent = `(${expired.length})`;
+  $("#saved-expired-items").innerHTML = expired.map((record, index) => renderSavedItem(record, current.length + index)).join("");
 }
 const savedFilterIds = ["#saved-query", "#saved-country", "#saved-type", "#saved-deadline-from", "#saved-deadline-to", "#saved-comp-min", "#saved-sort", "#saved-order", "#saved-show-unknown-pay", "#saved-show-reported"];
 savedFilterIds.forEach(id => $(id).addEventListener(id === "#saved-query" || id === "#saved-comp-min" ? "input" : "change", renderSaved));

@@ -3,8 +3,14 @@
 PHDBOT finds research and higher-education opportunities across European universities,
 research institutes, centres and foundations. It collects vacancy pages, extracts
 opportunities and provides search, institution browsing, review history and exports.
-The [essential release](docs/ESSENTIAL_RELEASE_20260926.md) is usable; catalogue
-activation and rare portal coverage continue incrementally.
+The [essential feature set](docs/ESSENTIAL_RELEASE_20260926.md) is usable.
+The first broad-coverage release will require most non-problematic sources
+and their opportunities to be searchable; catalogue activation continues.
+
+> **Standalone, with optional Valet automation.** PHDBOT runs locally with only
+> the setup requirements below. Its own scheduler executes pipeline jobs. A
+> separate project hook can let Valet observe completed jobs and wake Codex to
+> plan the next useful work; Valet is not required for collection or search.
 
 The local stack uses FastAPI, PostgreSQL, Qdrant and Ollama. Collection and indexing
 can use provisional leads without waiting for optional deep review. A search result
@@ -18,7 +24,17 @@ WHED identifier; individually verified institutions can be maintained as curated
 Audited official vacancy portals can likewise be kept in a small curated-source registry when
 generic discovery misses them; they complement normal discovery rather than replacing it.
 An additional conservative `research` tier covers research institutes/centres with an official
-website, ROR identifier and minimum public documentation. ISTI-CNR and FBK are curated seeds.
+website, ROR identifier and minimum public documentation.
+
+## How PHDBOT works
+
+PHDBOT maintains a catalogue of institutions, locates their official jobs and
+careers pages (including external recruitment portals), extracts positions and
+indexes supported current leads for semantic and filter-based search. The
+Coverage view distinguishes an institution that is only listed from one with
+searchable opportunities. Results link back to the official page; uncertain
+leads are labelled **Probable** and can be filtered out. Refreshes preserve
+checkpoints and revisit changing deadlines without requiring a full rebuild.
 
 ## Quickstart
 
@@ -81,52 +97,14 @@ have been processed; adding an institution to the catalogue alone does not make
 its opportunities searchable. Discovery also checks jobs/careers pages and
 external recruitment hosts, whose ownership and listing scope must be verified.
 
-### Thermal protection on the local machine
-
-On this Compose installation, the CPU watcher samples the host's kernel CPU
-sensor every 5 seconds. At or above 95 °C for 60 seconds it holds new pipeline
-work at safe checkpoints; 102 °C requests a hold immediately at the next safe
-boundary. It resumes after 30 seconds at or below 85 °C. Startup and lost sensor
-readings also hold work until a fresh cool interval is observed. An in-flight
-network/model request can finish before the hold, so this is not firmware-level
-emergency protection. It reads CPU temperature only; GPU and disk temperatures
-remain outside this watcher. The API status and Pipeline tab show its state.
-Supported Linux CPU sensor drivers are `k10temp`, `coretemp` and `zenpower`.
-Check the thermal endpoint on another machine before collecting data: an
-unsupported or inaccessible sensor deliberately holds work. The watcher can be
-disabled explicitly with `PHDBOT_THERMAL_ENABLED=false` when providing another
-monitoring arrangement. These thresholds are the current laptop configuration,
-not a hardware-independent temperature recommendation.
-
-Actual pauses and critical readings are logged in `exports/thermal-events/`.
-For this installation, `make thermal-events-install` installs a local user timer
-that forwards pause and critical observations to desktop notifications and the
-existing paired Valet outbox. During Codex PARK the chat notification waits for
-resume; a local desktop notification can still appear. Once ordinary behaviour
-is established, set `PHDBOT_THERMAL_NOTIFY_PAUSES=false` in `.env` to retain
-pause logs without routine notifications; critical notifications stay enabled.
-The timer also writes bounded 10-second samples during active or thermally held
-runs in `var/thermal/samples-YYYYMMDD.jsonl` for measuring behaviour. Temperature
-thresholds are Compose environment variables; see `docker-compose.yaml`.
-Temporary CPU-budget experiments are optional: `scripts/thermal_cpu_trial.py`
-uses an explicitly prepared local lease in `var/thermal/cpu-trial.json` to limit
-only the original PHDBOT Ollama container. The same thermal timer restores its
-previous positive budget at the registered wave's completion or lease expiry
-(at most six hours), and preserves competing operator changes. Trials starting
-from an unlimited budget are rejected: Docker ignores `--cpus 0` during update.
-Legacy leases in that situation enter `recovery_required`; restoring the exact
-unlimited configuration requires an explicitly authorized container recreation. It never launches jobs.
-The timer and Docker access must remain available for automatic restoration;
-a restart resumes lease reconciliation. No adaptive CPU throttling is enabled
-by default, and a lower CPU budget has not yet been shown to improve throughput.
-
 ## Control panel (GUI)
 
 With the stack up (`make run`), open <http://localhost:8003/> — a single-page local admin UI
 served by the API itself (no extra container). Tabs: **Pipeline** (live status + start/stop/resume
 controls), **Coverage** (per-institution counts + totals), **Review** (reversible manual and
 automatic screening), **Search** (semantic search, detail and portable export), **Saved**
-(browser-local shortlist and calendar), and **Macros**
+(browser-local shortlist and calendar with expired deadlines folded away), **User**
+(a placeholder for future personal search preferences), and **Macros**
 (saved refresh → search → export workflows). It just calls the JSON endpoints below over the
 same origin.
 
@@ -277,7 +255,52 @@ A local LLM on the host is reachable from containers as `http://host.docker.inte
 `localhost` URLs only apply to host-side tooling (`make migrate`, `uv run phd ...`); compose
 overrides them for the container.
 
+## Thermal protection on the local machine
+
+On this Compose installation, the CPU watcher samples the host's kernel CPU
+sensor every 5 seconds. At or above 95 °C for 60 seconds it holds new pipeline
+work at safe checkpoints; 102 °C requests a hold immediately at the next safe
+boundary. It resumes after 30 seconds at or below 85 °C. Startup and lost sensor
+readings also hold work until a fresh cool interval is observed. An in-flight
+network/model request can finish before the hold, so this is not firmware-level
+emergency protection. It reads CPU temperature only; GPU and disk temperatures
+remain outside this watcher. The API status and Pipeline tab show its state.
+Supported Linux CPU sensor drivers are `k10temp`, `coretemp` and `zenpower`.
+Check the thermal endpoint on another machine before collecting data: an
+unsupported or inaccessible sensor deliberately holds work. The watcher can be
+disabled explicitly with `PHDBOT_THERMAL_ENABLED=false` when providing another
+monitoring arrangement. These thresholds are the current laptop configuration,
+not a hardware-independent temperature recommendation.
+
+Actual pauses and critical readings are logged in `exports/thermal-events/`.
+For this installation, `make thermal-events-install` installs a local user timer
+that forwards pause and critical observations to desktop notifications and the
+existing paired Valet outbox. During Codex PARK the chat notification waits for
+resume; a local desktop notification can still appear. Once ordinary behaviour
+is established, set `PHDBOT_THERMAL_NOTIFY_PAUSES=false` in `.env` to retain
+pause logs without routine notifications; critical notifications stay enabled.
+The timer also writes bounded 10-second samples during active or thermally held
+runs in `var/thermal/samples-YYYYMMDD.jsonl` for measuring behaviour. Temperature
+thresholds are Compose environment variables; see `docker-compose.yaml`.
+Temporary CPU-budget experiments are optional: `scripts/thermal_cpu_trial.py`
+uses an explicitly prepared local lease in `var/thermal/cpu-trial.json` to limit
+only the original PHDBOT Ollama container. The same thermal timer restores its
+previous positive budget at the registered wave's completion or lease expiry
+(at most six hours), and preserves competing operator changes. Trials starting
+from an unlimited budget are rejected: Docker ignores `--cpus 0` during update.
+Legacy leases in that situation enter `recovery_required`; restoring the exact
+unlimited configuration requires an explicitly authorized container recreation. It never launches jobs.
+The timer and Docker access must remain available for automatic restoration;
+a restart resumes lease reconciliation. No adaptive CPU throttling is enabled
+by default, and a lower CPU budget has not yet been shown to improve throughput.
+The [measured thermal trial](docs/THERMAL_TRIAL_20261005.md) and
+[application-level control research](docs/THERMAL_APPLICATION_CONTROL_20261005.md)
+explain the current limits and the proposed next test.
+
 ## Data resilience and bootstrap
+
+The [distribution and profile roadmap](docs/ROADMAP_DISTRIBUTION_AND_PROFILE_20261005.md)
+explains a future public data bootstrap, incremental updates and optional user profiles.
 
 Git stores the application, migrations and reproducible configuration—not live
 PostgreSQL/Qdrant data. Operational backups may contain source text, contact
@@ -297,7 +320,3 @@ Env vars, prefix `PHD_SEARCHER__`, nested with `__`. See `.env.example`.
 - `config/` — pydantic-settings. `typedef/` — request/response models + shared types (pure data). `dependency/` — injector modules. `engine/` — `ModelHelper` (litellm) + prompt rendering. `service/` — business logic. `apis/v1/` — routes. `database/` — SQLAlchemy models + Alembic.
 - `tests/unit/` — fast, mocked. `tests/integration/` — separate uv project, spins docker compose.
 - `Makefile` — dev tasks.
-
-Thermal tuning: the [measured CPU-budget comparison](docs/THERMAL_TRIAL_20261005.md)
-and [hardware-specific research and proposed next test](docs/THERMAL_OPTIONS_20261005.md)
-distinguish verified recovery from untested power-management options.
