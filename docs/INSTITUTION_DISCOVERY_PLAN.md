@@ -7,6 +7,25 @@ main expansion strategy. No global scraping of LinkedIn is planned.
 
 ## Deployment checkpoint — 2026-09-13
 
+September22 continuation (supersedes catalog-activation limitations below):
+bounded catalog expansion now has a Coverage preview/activation panel and
+`/v1/catalog/expansion` GET/POST. It reuses persistent one-shot schedules, one
+institution per run with early publication and no review stages. Admission and
+queue insertion are atomic and concurrent duplicate requests reuse the same job;
+verified on an isolated restored production backup. Existing sources are retained
+for scoped collection, not repeatedly rediscovered. See OPERATIONS for limits,
+scope checks, cancellation semantics and remaining automation boundaries.
+
+Discovery prioritizes recruitment hubs and follows jobs subsections/linked ATS
+within the existing four-page budget; a failed optional hub no longer replays
+successful siblings. The generic schema repair also recovers a missing URL from
+the exact anchor already selected as the title, without another model call.
+Schemas with explicit URLs and inline descriptions retain their behavior.
+Initial AIT run125 exposed this missing-title-link failure (30 rows/4 indexed,
+154.8s); later canary outcomes belong in the dated report/checkpoint, not this
+historical result. Source-schema failures now save the last error and source ID
+in the durable run checkpoint.
+
 ### Validated discovery selection
 
 Follow-up118 exhausted the generation cap without a tool call (gpt-oss medium
@@ -439,3 +458,21 @@ This proves the identity-discovery method, not end-to-end IPAL ingestion. Main
 pipeline behaviour is unchanged by the preview. RNSR adapter, external-ID schema,
 durable source queue, cross-border location policy and end-to-end dedup remain
 open; no claim that every requested centre is already searchable.
+
+## 2026-09-22 canary outcome (local implementation)
+
+Bounded catalogue activation now has a Coverage preview and an idempotent persistent
+schedule per selected institution. This closes the manual catalogue-to-pipeline
+handoff; it does not implement unattended registry import or adaptive refresh.
+AIT run126 preserved30 records, repaired exact title-anchor URLs without another
+schema generation, and exposed4 provisional search results (including one explicitly
+spontaneous application). All4 destination pages were reachable with matching titles.
+INO run127 yielded no searchable additions:282 personnel profiles and an empty-board
+heading. Its personnel source was held reversibly; the new preflight guard avoids
+model work on repeated contact directories and rechecks after7days. Champalimaud
+run128 discovered the real open-positions board but schema generation failed on a
+nested-list/top-level-title mismatch. These acquisition counts must not be reported
+as successful opportunity coverage. IOW run129 was still active at this checkpoint.
+The root fallback and personnel guard have passed964 unit tests/Ruff/mypy; deployment
+state is recorded in ignored CURRENT_STATE.md. Existing records and completed runs
+are preserved. Follow-up repairs remain separate from new-source collection.

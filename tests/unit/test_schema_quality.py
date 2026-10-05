@@ -75,3 +75,25 @@ def test_non_anchor_base_schema_is_not_rewritten():
         "fields": [{"name": "title", "selector": "h3", "type": "text"}],
     }
     assert repair_base_anchor_url_schema(schema) == schema
+
+
+def test_title_anchor_recovers_direct_job_link_instead_of_synthetic_fragment():
+    schema = {"baseSelector": "#jobs-list tbody tr", "fields": [
+        {"name": "title", "selector": "td .job-title a", "type": "text"},
+    ]}
+    repaired = repair_base_anchor_url_schema(schema)
+    items = JsonCssExtractionStrategy(repaired).extract("https://jobs.example/jobs", '''
+        <table id="jobs-list"><tbody><tr><td><div class="job-title">
+        <a href="/Job/123">PhD in remote sensing</a></div>
+        <a href="/share">Share</a></td></tr></tbody></table>
+    ''')
+    assert items == [{"title": "PhD in remote sensing", "url": "/Job/123"}]
+    assert len(schema["fields"]) == 1
+
+
+def test_existing_explicit_url_field_wins_over_title_anchor_repair():
+    schema = {"baseSelector": "li", "fields": [
+        {"name": "title", "selector": "a", "type": "text"},
+        {"name": "url", "selector": "a.apply", "type": "attribute", "attribute": "href"},
+    ]}
+    assert repair_base_anchor_url_schema(schema) == schema

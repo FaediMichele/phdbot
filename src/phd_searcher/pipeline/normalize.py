@@ -42,6 +42,7 @@ _MONTH_ALIASES: dict[int, tuple[str, ...]] = {
 }
 _DEADLINE_CONTEXT_RE = re.compile(
     r"(?:application deadline|submission deadline|registration deadline|expression[- ]of[- ]interest deadline|closing date|"
+    r"deadline\s+for\s+(?:(?:submitting|submission\s+of)\s+)?(?:your\s+|the\s+)?applications?\b|"
     r"application portal.{0,160}\bcloses?|apply(?:ing)?\s+(?:no later than|by)|open (?:until|till)|"
     r"applications?\s+(?:close|until|between)|scadenza|termine.{0,40}(?:domand|candidatur)|"
     r"bewerbungsfrist|bewerbung(?:en)?.{0,160}\bbis(?:\s+zum)?|"
@@ -61,6 +62,34 @@ _NULL_DEADLINE_RE = re.compile(
     r"(?:none(?:\s+specified)?|not\s+specified|n\s*/?\s*a|no\s+deadline)\b",
     re.IGNORECASE,
 )
+_OTHER_DATE_LABEL_RE = re.compile(
+    r"\b(?:expected\s+)?(?:(?:position|project|contract|employment)\s+)?"
+    r"(?:start(?:ing)?|commencement|interview|publication)\s+date\b|"
+    r"\b(?:reference|recommendation)\s+(?:letters?\s+)?deadline\b|"
+    r"\bdeadline\s+for\s+(?:receiving|submitting)\s+(?:the\s+)?(?:reference|recommendation)\s+letters?\b",
+    re.IGNORECASE,
+)
+
+_START_DATE_ASIDE_RE = re.compile(
+    r"\(\s*(?:starting|start date|commencing|beginning)\b"
+    r"(?:(?!\b(?:deadline|apply|applications?)\b)[^()])*\)",
+    re.IGNORECASE,
+)
+
+
+def _deadline_clause(raw: str) -> str:
+    """Keep a neighbouring metadata label out of stored deadline evidence."""
+    # Inline start-date asides are not deadlines. Remove only the aside so
+    # later application windows survive, without borrowing its year.
+    raw = _START_DATE_ASIDE_RE.sub(" ", raw)
+    deadline = _DEADLINE_CONTEXT_RE.search(raw)
+    if deadline:
+        boundary = _OTHER_DATE_LABEL_RE.search(raw, deadline.start())
+        if boundary:
+            return raw[:boundary.start()].rstrip(" |;.,\n")
+    return raw
+
+
 _AMOUNT_RE = re.compile(r"(?<!\w)\d[\d\s.,]*(?!\w)")
 _ECB_CURRENCY_CODES = (
     "EUR",
@@ -217,7 +246,7 @@ def parse_deadline(raw: str | None) -> date | None:
     # application deadline.  Never borrow a neighbouring start/project date.
     if raw and _NULL_DEADLINE_RE.search(raw):
         return None
-    dates = parse_dates(raw)
+    dates = parse_dates(_deadline_clause(raw) if raw else raw)
     return max(dates, default=None)
 
 
@@ -231,7 +260,7 @@ def extract_deadline(text: str) -> tuple[str | None, date | None]:
     compact = re.sub(r"\s+", " ", text).strip()
     candidates: list[tuple[date, str]] = []
     for match in _DEADLINE_CONTEXT_RE.finditer(compact):
-        snippet = match.group().strip()
+        snippet = _deadline_clause(match.group().strip())
         if _NULL_DEADLINE_RE.search(snippet):
             continue
         dates = parse_dates(snippet)

@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from time import monotonic
 
@@ -9,8 +13,10 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from phd_searcher.database.models.pipeline_run import PipelineRun
+from phd_searcher.thermal import get_thermal_guard
 
 _CURRENT_LABEL_MAX_LENGTH = 512
+_LOGGER = logging.getLogger(__name__)
 
 
 def _utcnow() -> datetime:
@@ -74,6 +80,7 @@ class Progress:
         self.total = total
         self._mark = monotonic()
         await self._persist()
+        await self.wait_for_temperature()
 
     async def tick(self, label: str) -> None:
         """A inizio unità: chiude la precedente (durata, done) e imposta la corrente."""
@@ -84,6 +91,7 @@ class Progress:
         self._mark = now
         self.current = label
         await self._persist()
+        await self.wait_for_temperature()
 
     async def finish(self) -> None:
         """Fine stadio (chiamata dal runner): l'ultima unità conta come completata."""
@@ -96,6 +104,32 @@ class Progress:
     async def check_stop(self) -> None:
         """Rilegge il segnale di stop senza avanzare contatori o durata dell'unità."""
         await self._persist()
+        await self.wait_for_temperature()
+
+    async def wait_for_temperature(self) -> None:
+        """Hold this same run at a safe boundary, keeping Stop and heartbeat live."""
+        guard = get_thermal_guard()
+        if self.should_stop or not guard.blocked:
+            return
+        # Also supports the CLI, which does not run the API lifespan.
+        await guard.start()
+        previous = self.current
+        started = monotonic()
+        guard.emit("pause", run_id=self._run_id, stage=self._stage, reason=guard.reason)
+        try:
+            async with self.measure("thermal_wait"):
+                while guard.blocked and not self.should_stop:
+                    self.current = f"Pausa termica CPU — {guard.reason}"
+                    await self._persist()
+                    if not self.should_stop:
+                        await asyncio.sleep(guard.config.sample_seconds)
+        finally:
+            guard.emit("pause_end", run_id=self._run_id, stage=self._stage,
+                       stopped=self.should_stop, duration_seconds=round(monotonic() - started, 3))
+            self.current = previous
+            if self._mark is not None:
+                self._mark += max(monotonic() - started, 0)
+            await self._persist()
 
     async def load_checkpoint(self) -> dict[str, object]:
         """Carica una volta il cursore durevole dello stadio corrente."""
@@ -139,6 +173,37 @@ class Progress:
                 return
             row.checkpoints = {**row.checkpoints, self._stage: dict(self._checkpoint)}
             await session.commit()
+
+    @asynccontextmanager
+    async def measure(self, label: str) -> AsyncIterator[None]:
+        """Accumulate wall time and attempt counts in the durable stage checkpoint.
+
+        Telemetry is best-effort: a failed measurement write must not change
+        the outcome of the work being measured. A resumed stage adds attempts
+        to the same counters rather than replacing the previous sample.
+        """
+        started = monotonic()
+        failed = False
+        try:
+            yield
+        except BaseException:
+            failed = True
+            raise
+        finally:
+            try:
+                checkpoint = await self.load_checkpoint()
+                performance = checkpoint.get("performance")
+                measurements = dict(performance) if isinstance(performance, dict) else {}
+                previous = measurements.get(label)
+                counter = dict(previous) if isinstance(previous, dict) else {}
+                measurements[label] = {
+                    "calls": int(counter.get("calls", 0)) + 1,
+                    "seconds": round(float(counter.get("seconds", 0.0)) + max(monotonic() - started, 0.0), 3),
+                    "failures": int(counter.get("failures", 0)) + int(failed),
+                }
+                await self.save_checkpoint(performance=measurements)
+            except Exception:
+                _LOGGER.warning("could not persist pipeline timing %s", label, exc_info=True)
 
     async def _persist(self) -> None:
         if self._session_maker is None or self._run_id is None:

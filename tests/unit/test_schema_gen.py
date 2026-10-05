@@ -76,7 +76,7 @@ async def test_exhausted_tool_feedback_has_a_typed_non_transport_failure(
         return {"role": "assistant", "content": "no schema"}, [], True
 
     monkeypatch.setattr(schema_gen, "_complete_with_tools", no_tool_calls)
-    with pytest.raises(schema_gen.SchemaGenerationExhaustedError, match="after 4 attempts"):
+    with pytest.raises(schema_gen.SchemaGenerationExhaustedError, match=r"after 2 attempts.*without a tool call"):
         await schema_gen._generate_schema_with_tools(
             "<main>No listing here</main>",
             "Extract jobs",
@@ -87,7 +87,7 @@ async def test_exhausted_tool_feedback_has_a_typed_non_transport_failure(
             ),
         )
 
-    assert calls == 4
+    assert calls == 2
 
 
 async def test_native_ollama_schema_generation_caps_only_output(
@@ -136,3 +136,33 @@ async def test_native_ollama_schema_generation_caps_only_output(
     }
     assert payload["model"] == "test-model"
     assert observed["url"] == "http://ollama.test/api/chat"
+
+
+@pytest.mark.parametrize("sequence", [
+    ["missing", "valid"],
+    ["invalid", "invalid", "invalid", "valid"],
+    ["missing", "invalid", "missing", "valid"],
+])
+async def test_tool_progress_retains_schema_correction_budget(monkeypatch, sequence):
+    responses = iter(sequence)
+    calls = 0
+
+    async def complete(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        response = next(responses)
+        if response == "missing":
+            return {"role": "assistant", "content": "working"}, [], True
+        schema = SAFE_SCHEMA if response == "valid" else {**SAFE_SCHEMA, "baseSelector": ".absent"}
+        call = {"function": {"name": "submit_extraction_schema", "arguments": schema}}
+        return {"role": "assistant", "tool_calls": [call]}, [call], True
+
+    monkeypatch.setattr(schema_gen, "_complete_with_tools", complete)
+    result = await schema_gen._generate_schema_with_tools(
+        '<ul><li class="job"><h2>PhD one</h2><a href="/1">Apply</a></li>'
+        '<li class="job"><h2>PhD two</h2><a href="/2">Apply</a></li></ul>',
+        "Extract jobs",
+        C4ALLMConfig(provider="ollama/test", api_token="none", base_url="http://ollama.test"),
+    )
+    assert result == SAFE_SCHEMA
+    assert calls == len(sequence)

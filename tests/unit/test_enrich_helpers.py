@@ -617,3 +617,15 @@ def test_synthetic_fragment_never_promotes_a_whole_bounded_listing():
         )
         is None
     )
+
+
+def test_clean_detail_handles_nested_removed_chrome_without_losing_job_text():
+    description = 'A funded PhD position in optical systems. ' * 8
+    html = ('<main><div class="cookie-banner"><div><span>Cookie settings</span></div></div>'
+            '<div class="social-links"><a href="/share"><span>Share</span></a></div>'
+            f'<h1>PhD in optics</h1><p>{description}</p></main>')
+    result = _clean_detail_document(html, 'fallback')
+    assert 'PhD in optics' in result
+    assert 'funded PhD position' in result
+    assert 'Cookie settings' not in result
+    assert 'Share' not in result

@@ -773,3 +773,21 @@ def test_fast_triage_evidence_requires_application_or_negative_signals():
         decision="rejected",
         position_type="other",
     )
+
+
+@pytest.mark.parametrize('invitation', [
+    'Our research centre invites applications for a PhD thesis in remote sensing.',
+    'We are offering a doctoral research project in structural monitoring.',
+    'We invite applications for one Ph.D. position in immunology.',
+])
+def test_singular_doctoral_recruitment_is_not_surrounding_programme(invitation):
+    quotes = [invitation, 'Coursework: if required by the doctoral programme, attend courses. Apply now.']
+    assert opportunity_kind_evidence_supports(quotes, 'vacancy')
+    assert not opportunity_kind_evidence_supports(quotes, 'programme')
+    assert classify_opportunity_kind_evidence(quotes) == 'vacancy'
+
+
+def test_real_programme_intake_is_preserved_despite_thesis_requirements():
+    quotes = ['Our doctoral programme invites applications for the next intake. Apply now.',
+              'Students complete a PhD thesis and coursework during the programme.']
+    assert classify_opportunity_kind_evidence(quotes) == 'programme'

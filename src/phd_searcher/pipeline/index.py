@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
+import hashlib
 import json
+from collections import OrderedDict
+from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time
 from typing import Any, Literal, cast
@@ -105,6 +109,52 @@ VerificationMetadata = tuple[
     int,
     tuple[UncertaintyFlag, ...],
 ]
+
+
+class _VerificationCache:
+    """Process-local reuse for identical ORM snapshots on the same local day.
+
+    Keys cover every persisted position/source field, including evidence,
+    screening verdicts and source health. Only hashes and immutable results are
+    retained, never ORM objects or document text. Restart/code deployment and
+    day rollover invalidate reuse; eviction only costs a fresh evaluation.
+    """
+
+    def __init__(self, max_entries: int = 32_768) -> None:
+        self.max_entries = max_entries
+        self.entries: OrderedDict[bytes, VerificationMetadata | None] = OrderedDict()
+        self.day: date | None = None
+        self.hits = 0
+        self.misses = 0
+
+    def assess(
+        self, position: Position, today: date, *, listing_page: ListingPage | None = None,
+    ) -> VerificationMetadata | None:
+        if self.day != today:
+            self.entries.clear()
+            self.day = today
+        snapshot = [
+            [getattr(position, column.key) for column in Position.__table__.columns],
+            None if listing_page is None else [
+                getattr(listing_page, column.key) for column in ListingPage.__table__.columns
+            ],
+        ]
+        key = hashlib.sha256(json.dumps(
+            snapshot, sort_keys=True, separators=(",", ":"), default=str,
+        ).encode()).digest()
+        if key in self.entries:
+            self.hits += 1
+            self.entries.move_to_end(key)
+            return self.entries[key]
+        self.misses += 1
+        result = _verification_metadata(position, today, listing_page=listing_page)
+        self.entries[key] = result
+        if len(self.entries) > self.max_entries:
+            self.entries.popitem(last=False)
+        return result
+
+
+_VERIFICATION_CACHE = _VerificationCache()
 ProvisionalAssessment = tuple[int, tuple[UncertaintyFlag, ...]]
 FamilySignalPayload = tuple[str | None, int]
 # These are deliberately interpretable heuristic tiers, not probabilities.
@@ -138,6 +188,19 @@ class ProvisionalGateDecision:
 
     assessment: ProvisionalAssessment | None
     reason: str
+
+
+async def _cooperative_rows[T](rows: Iterable[T]) -> AsyncIterator[T]:
+    """Let API/control tasks run between small batches of synchronous gates.
+
+    Every row still receives the same checks. A scoped index can reconcile
+    thousands of existing provisional records, so network awaits alone are
+    insufficient to keep the shared API event loop responsive.
+    """
+    for offset, row in enumerate(rows):
+        if offset % 16 == 0:
+            await asyncio.sleep(0)
+        yield row
 
 
 def _checkpoint_int(value: object) -> int:
@@ -462,6 +525,10 @@ def _provisional_gate_decision(
         position,
         today=current_day,
     )
+    # A year-only row cannot identify an opportunity. Shared recruitment
+    # prose must not rescue bibliography/archive headings as provisional leads.
+    if len(title.strip()) == 4 and title.strip().isascii() and title.strip().isdigit():
+        return ProvisionalGateDecision(None, "unusable_year_title")
     url = str(getattr(position, "url", "") or "")
     status_conflict = has_future_deadline_status_conflict(
         str(getattr(position, "description", "") or ""),
@@ -889,7 +956,7 @@ async def _sync_opportunity_kind_payload(
         ],
         list[int | str],
     ] = {}
-    for position, listing_page in indexed_rows:
+    async for position, listing_page in _cooperative_rows(indexed_rows):
         verification = _verification_metadata(
             position,
             current_day,
@@ -1179,13 +1246,20 @@ async def run(
         provisional_indexed = (
             await session.execute(_provisional_indexed_stmt(today))
         ).all()
-        for position, listing_page in provisional_indexed:
-            if _verification_metadata(
-                position,
-                listing_page=listing_page,
-                today=today,
-            ) is None:
-                unsearchable[position.id] = position
+        cache_hits, cache_misses = _VERIFICATION_CACHE.hits, _VERIFICATION_CACHE.misses
+        async with progress.measure("existing_verification"):
+            async for position, listing_page in _cooperative_rows(provisional_indexed):
+                if _VERIFICATION_CACHE.assess(
+                    position,
+                    listing_page=listing_page,
+                    today=today,
+                ) is None:
+                    unsearchable[position.id] = position
+        print(
+            "index: existing verification reused "
+            f"{_VERIFICATION_CACHE.hits - cache_hits}, evaluated "
+            f"{_VERIFICATION_CACHE.misses - cache_misses}"
+        )
         if unsearchable:
             for position in unsearchable.values():
                 position.indexed_at = None
@@ -1232,7 +1306,7 @@ async def run(
         candidate_rows = (await session.execute(stmt)).all()
         rows = [
             row
-            for row in candidate_rows
+            async for row in _cooperative_rows(candidate_rows)
             if _verification_metadata(
                 row[0],
                 today,

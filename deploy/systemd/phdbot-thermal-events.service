@@ -1,0 +1,7 @@
+[Unit]
+Description=PHDBOT CPU thermal notifications through desktop and Valet
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 @PROJECT_DIR@/scripts/thermal_event_bridge.py --project @PROJECT_DIR@
+TimeoutStartSec=120

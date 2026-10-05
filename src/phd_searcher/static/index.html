@@ -197,7 +197,12 @@
   .calendar-date { display: block; margin-bottom: 4px; font-size: 11px; }
   .calendar-event { display: block; margin: 3px 0; padding: 2px 4px; border-radius: 4px; background: color-mix(in srgb, var(--accent) 13%, transparent);
     color: var(--text); font-size: 10px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .calendar-event.expired { background: color-mix(in srgb, var(--muted) 12%, transparent); color: var(--muted); opacity: .7; }
   .calendar-more { color: var(--muted); font-size: 10px; }
+  .saved-expired { margin-top: 16px; }
+  .saved-expired > summary { cursor: pointer; color: var(--muted); font-weight: 650; }
+  .saved-expired .hit { opacity: .72; }
+  .saved-expired .hit:focus-within, .saved-expired .hit:hover { opacity: 1; }
   .saved-empty { padding: 28px 12px; text-align: center; color: var(--muted); }
   .muted { color: var(--muted); }
   .screen-badge { display:inline-block; border-radius:12px; padding:1px 8px; font-size:11px; font-weight:600; color:var(--status-fg); }
@@ -276,6 +281,7 @@
   <button id="tab-review" role="tab" aria-controls="review" aria-selected="false" tabindex="-1" data-tab="review" title="Inspect or decide candidates that need human attention">Review</button>
   <button id="tab-search" role="tab" aria-controls="search" aria-selected="false" tabindex="-1" data-tab="search" title="Search indexed opportunities by meaning and structured filters">Search</button>
   <button id="tab-saved" role="tab" aria-controls="saved" aria-selected="false" tabindex="-1" data-tab="saved" title="Review and organize opportunities saved in this browser">Saved <span id="saved-nav-count" aria-label="saved opportunities"></span></button>
+  <button id="tab-user" role="tab" aria-controls="user" aria-selected="false" tabindex="-1" data-tab="user" title="Your profile and future search preferences">User</button>
   <button id="tab-macros" role="tab" aria-controls="macros" aria-selected="false" tabindex="-1" data-tab="macros" title="Save repeatable refresh, search and export workflows">Macros</button>
 </nav>
 <main>
@@ -284,6 +290,7 @@
     <div class="card">
       <h2>Status</h2>
       <div id="pstatus" class="muted">loading…</div>
+      <p id="thermal-status" class="muted" aria-live="polite"></p>
     </div>
     <div class="card">
       <h2>Controls</h2>
@@ -343,6 +350,18 @@
   <!-- COVERAGE -->
   <section id="coverage" class="tab" role="tabpanel" aria-labelledby="tab-coverage" hidden>
     <div class="tiles" id="cov-tiles"></div>
+    <details class="card">
+      <summary>Explore research institutions from the expanded catalog</summary>
+      <p class="muted">Preview up to five institutions without known sources. Activate and schedule a small collection for each; results publish as each institution finishes. No deep review is included.</p>
+      <div class="section-tools">
+        <input id="exp-country" maxlength="2" placeholder="Country code (optional)" aria-label="Expansion country code">
+        <input id="exp-query" type="search" placeholder="Institution name (optional)" aria-label="Expansion institution name">
+        <button class="act ghost" id="exp-preview">Preview institutions</button>
+        <button class="act" id="exp-enqueue" disabled>Activate &amp; schedule selected</button>
+      </div>
+      <div id="exp-results"></div>
+      <p id="exp-status" class="muted" role="status" aria-live="polite"></p>
+    </details>
     <div class="card">
       <h2>Institutions</h2>
       <div class="section-tools">
@@ -449,7 +468,7 @@
             <label title="Optional display cap; empty returns every match above the relevance threshold">Maximum results <input id="s-limit" type="number" min="1" placeholder="all"></label>
             <label title="Probable results pass hard safety checks but may still contain explicitly labelled uncertainty">Verification <select id="s-mode"><option value="include_probable">verified + probable</option><option value="verified_only">verified only</option></select></label>
             <label title="Heuristic audit score, not a statistical probability. The 60% default includes useful title-grounded leads while hiding legacy verdicts without auditable evidence">Maximum uncertainty (%) <input id="s-max-uncertainty" type="number" min="0" max="100" step="5" value="60" placeholder="all"></label>
-            <label title="Reported items are hidden in this browser by default"><span><input id="s-show-reported" type="checkbox"> show reported items</span></label>
+            <label title="Active reports hide the exact item from default search"><span><input id="s-show-reported" type="checkbox"> show reported items</span></label>
           </div>
         </div>
       </div>
@@ -522,7 +541,18 @@
         </div>
       </details>
     </div>
-    <div class="card"><div id="saved-items" aria-live="polite"></div></div>
+    <div class="card">
+      <div id="saved-items" aria-live="polite"></div>
+      <details id="saved-expired" class="saved-expired" hidden>
+        <summary>Expired deadlines <span id="saved-expired-count"></span></summary>
+        <div id="saved-expired-items"></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- USER -->
+  <section id="user" class="tab" role="tabpanel" aria-labelledby="tab-user" hidden>
+    <div class="card"><h2>User</h2><p class="muted">Profile and personalized search are planned for a future release.</p></div>
   </section>
 
   <!-- MACROS -->
@@ -751,6 +781,13 @@ function renderStatus(st) {
 
 async function poll() {
   try {
+    const t = await api("/v1/pipeline/thermal");
+    const temp = t.cpu_c == null ? "unavailable" : `${t.cpu_c.toFixed(1)} °C`;
+    $("#thermal-status").textContent = !t.enabled ? "CPU thermal guard disabled" :
+      `CPU ${temp} · ${t.blocked ? "Cooling hold: new work waits; the current operation may still be finishing." : "Thermal guard active."} ` +
+      `Pause at ${t.config.pause_c} °C for ${t.config.hot_seconds}s; resume below ${t.config.resume_c} °C for ${t.config.cool_seconds}s. GPU not monitored.`;
+  } catch { $("#thermal-status").textContent = "Thermal guard status unavailable"; }
+  try {
     await api("/health");
     $("#health").className = "dot ok"; $("#health").title = "API healthy";
   } catch { $("#health").className = "dot err"; $("#health").title = "API unreachable"; }
@@ -872,6 +909,32 @@ async function cancelSchedule(id) {
 window.cancelSchedule = cancelSchedule;
 
 // ---- coverage ----
+$("#exp-preview").onclick = async () => {
+  $("#exp-preview").disabled = true;
+  $("#exp-enqueue").disabled = true;
+  $("#exp-results").replaceChildren();
+  $("#exp-status").textContent = "Loading catalog preview…";
+  try {
+    const params = new URLSearchParams({limit: "5"});
+    if ($("#exp-country").value.trim()) params.set("country", $("#exp-country").value.trim().toUpperCase());
+    if ($("#exp-query").value.trim()) params.set("query", $("#exp-query").value.trim());
+    const data = await api(`/v1/catalog/expansion?${params}`);
+    $("#exp-results").innerHTML = data.candidates.map(u => `<p><label><input type="checkbox" data-exp-id="${u.id}" checked> ${esc(u.name)} (${esc(u.country)})</label> <a href="${esc(u.website_url)}" target="_blank" rel="noopener">site ↗</a></p>`).join("");
+    $("#exp-status").textContent = `${data.total} imported institutions · ${data.catalog_only} catalog only · ${data.with_sources} with sources. ${data.candidates.length ? 'Each selected institution: up to 3 sources × 3 pages, followed by quality checks and publication. Preview order balances countries; it does not predict hiring.' : 'No unexplored research institutions match.'}`;
+    $("#exp-enqueue").disabled = !data.candidates.length;
+  } catch (error) { $("#exp-status").textContent = error.message; }
+  finally { $("#exp-preview").disabled = false; }
+};
+$("#exp-enqueue").onclick = async () => {
+  const institution_ids = [...document.querySelectorAll("[data-exp-id]:checked")].map(input => Number(input.dataset.expId));
+  if (!institution_ids.length) { $("#exp-status").textContent = "Select at least one institution."; return; }
+  $("#exp-enqueue").disabled = true;
+  try {
+    const result = await api("/v1/catalog/expansion", {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({institution_ids})});
+    $("#exp-status").textContent = result.schedules.map(s => `Schedule ${s.id}: ${s.state}${s.pipeline_run_id ? ` · run ${s.pipeline_run_id}` : ''}`).join(" · ") + ". Manage or cancel waiting jobs in Pipeline schedules. Activation persists if a schedule is cancelled.";
+    await loadCoverage();
+  } catch (error) { $("#exp-status").textContent = error.message; $("#exp-enqueue").disabled = false; }
+};
 let covData = [];
 let covPage = 0;
 const COV_PAGE_SIZE = 100;
@@ -1407,6 +1470,10 @@ function populateSavedFacets() {
 function localDateKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
+function savedDeadlineExpired(record, today = localDateKey(new Date())) {
+  const deadline = String(record.hit.deadline || "").slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(deadline) && deadline < today;
+}
 function renderSavedCalendar(records) {
   const withDeadlines = records.filter(record => record.hit.deadline);
   const withoutDeadline = records.length - withDeadlines.length;
@@ -1430,7 +1497,7 @@ function renderSavedCalendar(records) {
     const today = key === localDateKey(new Date());
     const links = events.slice(0, 3).map(record => {
       const hit = record.hit;
-      return `<a class="calendar-event" href="${esc(safeHref(hit.url))}" target="_blank" rel="noopener" onclick="markResultViewed(${Number(hit.position_id)},'source')" title="${esc(hit.title)} · ${esc(hit.university || "—")}">${esc(hit.title)}</a>`;
+      return `<a class="calendar-event${savedDeadlineExpired(record) ? " expired" : ""}" href="${esc(safeHref(hit.url))}" target="_blank" rel="noopener" onclick="markResultViewed(${Number(hit.position_id)},'source')" title="${esc(hit.title)} · ${esc(hit.university || "—")}">${esc(hit.title)}</a>`;
     }).join("");
     cells.push(`<div class="calendar-day${outside ? " outside" : ""}${today ? " today" : ""}" data-date="${key}"><span class="calendar-date">${date.getDate()}</span>${links}${events.length > 3 ? `<span class="calendar-more">+${events.length - 3} more</span>` : ""}</div>`);
   }
@@ -1459,8 +1526,13 @@ function renderSaved() {
   const total = Object.keys(savedPositions).length;
   $("#saved-count").textContent = `${records.length}${records.length !== total ? ` of ${total}` : ""} saved`;
   renderSavedCalendar(records);
-  $("#saved-items").innerHTML = records.length ? records.map(renderSavedItem).join("")
-    : `<div class="saved-empty">${total ? "No saved opportunities match these filters." : "Save an opportunity from Search to build your shortlist."}</div>`;
+  const current = records.filter(record => !savedDeadlineExpired(record));
+  const expired = records.filter(record => savedDeadlineExpired(record));
+  $("#saved-items").innerHTML = current.length ? current.map(renderSavedItem).join("")
+    : `<div class="saved-empty">${records.length ? "No saved opportunities with a current or unknown deadline match these filters." : total ? "No saved opportunities match these filters." : "Save an opportunity from Search to build your shortlist."}</div>`;
+  $("#saved-expired").hidden = expired.length === 0;
+  $("#saved-expired-count").textContent = `(${expired.length})`;
+  $("#saved-expired-items").innerHTML = expired.map((record, index) => renderSavedItem(record, current.length + index)).join("");
 }
 const savedFilterIds = ["#saved-query", "#saved-country", "#saved-type", "#saved-deadline-from", "#saved-deadline-to", "#saved-comp-min", "#saved-sort", "#saved-order", "#saved-show-unknown-pay", "#saved-show-reported"];
 savedFilterIds.forEach(id => $(id).addEventListener(id === "#saved-query" || id === "#saved-comp-min" ? "input" : "change", renderSaved));
@@ -1602,6 +1674,14 @@ function toggleReportPanel(id) {
 function renderSearchResult(result) {
   lastSearchResult = result;
   const {hits, total, institutions} = result;
+  for (const hit of hits) {
+    if (!Array.isArray(hit.feedback)) continue;
+    const reports = hit.feedback.filter(f => f.reason !== "confirmed_opportunity");
+    const latest = reports.at(-1) || hit.feedback.at(-1);
+    if (latest) reportedPositions[String(hit.position_id)] = {feedbackId:latest.id, reason:latest.reason, at:latest.created_at};
+    else delete reportedPositions[String(hit.position_id)];
+  }
+  persistReportedPositions();
   $("#s-institutions-card").style.display = institutions.length ? "block" : "none";
   $("#s-institutions").innerHTML = institutions.map((item, index) => `<div class="hit numbered-hit">
     <span class="hit-number">${index + 1}.</span>
@@ -1654,12 +1734,14 @@ async function submitPositionFeedback(id, forcedReason = null) {
       method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({reason, note}),
     });
     reportedPositions[String(id)] = {feedbackId:feedback.id, reason:feedback.reason, at:feedback.created_at};
+    const hit = lastSearchResult?.hits.find(h => h.position_id === id);
+    if (hit) hit.feedback = [...(hit.feedback || []).filter(f => f.dimension !== feedback.dimension), feedback];
     persistReportedPositions();
     if (lastSearchResult) renderSearchResult(lastSearchResult);
     if ($("#saved").classList.contains("active")) renderSaved();
     $("#s-msg").innerHTML = reason === "confirmed_opportunity"
       ? `Confirmation saved as auditable operator feedback. <button class="act ghost" onclick="undoPositionFeedback(${Number(id)})">Undo</button>`
-      : `Report saved and item hidden in this browser. <button class="act ghost" onclick="undoPositionFeedback(${Number(id)})">Undo</button>`;
+      : `Report saved and item hidden from default search. <button class="act ghost" onclick="undoPositionFeedback(${Number(id)})">Undo</button>`;
   } catch (e) { $("#s-msg").textContent = e.message; }
 }
 async function undoPositionFeedback(id) {
@@ -1669,14 +1751,14 @@ async function undoPositionFeedback(id) {
     if (feedback.feedbackId) await api(`/v1/positions/${id}/feedback/${feedback.feedbackId}/retract`, {method:"POST"});
     delete reportedPositions[String(id)];
     persistReportedPositions();
-    if (lastSearchResult) renderSearchResult(lastSearchResult);
+    if (lastSearchResult) await doSearch();
     if ($("#saved").classList.contains("active")) renderSaved();
-    $("#s-msg").textContent = "Report retracted; the item is visible again.";
+    $("#s-msg").textContent = "Feedback retracted. Other active reports, if any, still apply.";
   } catch (e) { $("#s-msg").textContent = e.message; }
 }
 window.submitPositionFeedback = submitPositionFeedback;
 window.undoPositionFeedback = undoPositionFeedback;
-$("#s-show-reported").onchange = () => { if (lastSearchResult) renderSearchResult(lastSearchResult); };
+$("#s-show-reported").onchange = () => { if (lastSearchResult) doSearch(); };
 async function doSearch() {
   $("#s-msg").textContent = "";
   if (searchLoading) return;
@@ -1689,6 +1771,7 @@ async function doSearch() {
   const body = {
     query: q,
     mode: $("#s-mode").value,
+    include_reported: $("#s-show-reported").checked,
     max_uncertainty: $("#s-max-uncertainty").value ? +$("#s-max-uncertainty").value : null,
     countries: checkedValues(".s-country-option"),
     universities,

@@ -9,11 +9,14 @@ from fastapi.params import Depends as DependsParam
 
 from phd_searcher.pipeline.runner import STAGES, PipelineError, PipelineRunner
 from phd_searcher.service.catalog_service import CatalogService
+from phd_searcher.service.expansion_service import ExpansionService
 from phd_searcher.service.export_service import ExportService
 from phd_searcher.service.feedback_service import FeedbackService
 from phd_searcher.service.macro_service import MacroService
 from phd_searcher.service.schedule_service import ScheduleService
 from phd_searcher.service.search_service import SearchService
+from phd_searcher.thermal import get_thermal_guard
+from phd_searcher.typedef.expansion import ExpansionCreate, ExpansionPreview, ExpansionQueued
 from phd_searcher.typedef.feedback import PositionFeedbackCreate, PositionFeedbackView
 from phd_searcher.typedef.macro import MacroCreate, MacroRunView, MacroView
 from phd_searcher.typedef.pipeline import PipelineStartBody, PipelineStatus
@@ -36,6 +39,11 @@ from phd_searcher.typedef.search import (
 router = APIRouter(prefix="/v1")
 
 
+@router.get("/pipeline/thermal")
+async def pipeline_thermal() -> dict[str, object]:
+    return get_thermal_guard().status()
+
+
 def _service[T](cls: type[T]) -> DependsParam:
     async def resolve(request: Request) -> T:
         return cast(T, request.app.state.container.get(cls))  # app.state non è tipizzato
@@ -50,6 +58,26 @@ ExportSvc = Annotated[ExportService, _service(ExportService)]
 FeedbackSvc = Annotated[FeedbackService, _service(FeedbackService)]
 MacroSvc = Annotated[MacroService, _service(MacroService)]
 ScheduleSvc = Annotated[ScheduleService, _service(ScheduleService)]
+ExpansionSvc = Annotated[ExpansionService, _service(ExpansionService)]
+
+
+@router.get("/catalog/expansion")
+async def expansion_preview(
+    service: ExpansionSvc, country: str | None = None, query: str | None = None,
+    limit: int = Query(default=5, ge=1, le=10),
+) -> ExpansionPreview:
+    try:
+        return await service.preview(country=country, query=query, limit=limit)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/catalog/expansion")
+async def expansion_queue(body: ExpansionCreate, service: ExpansionSvc) -> ExpansionQueued:
+    try:
+        return await service.enqueue(body)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.post("/search")

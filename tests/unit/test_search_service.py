@@ -10,6 +10,7 @@ from phd_searcher.service.search_service import (
     normalize_retrieval_query,
     normalized_retrieval_queries,
 )
+from phd_searcher.typedef.feedback import PositionFeedbackView
 from phd_searcher.typedef.search import SearchBody
 
 
@@ -170,6 +171,36 @@ async def test_search_returns_seeded_point(container, qdrant):
     assert result.hits[0].confidence == 0.98
     assert result.hits[0].first_seen_at.isoformat() == "2026-08-20T08:00:00+00:00"
     assert result.hits[0].last_seen_at.isoformat() == "2026-08-24T08:00:00+00:00"
+
+
+@pytest.mark.parametrize("query", ["", "robotics"])
+async def test_active_reports_hide_exact_item_and_undo_without_reindex(container, qdrant, monkeypatch, query):
+    await _seed(qdrant)
+    await qdrant.upsert("positions", points=[
+        PointStruct(id=2, vector=[1., 0., 0., 0.], payload={**PAYLOAD, "url": "https://uni.example/jobs/2"}),
+    ])
+    service = container.get(SearchService)
+    report = PositionFeedbackView(id=1, position_id=1, reason="mismatched_details",
+                                  dimension="extraction", value="mismatched", status="open",
+                                  created_at="2026-09-22T09:00:00Z")
+    confirmed = report.model_copy(update={"id": 2, "reason": "confirmed_opportunity",
+                                          "dimension": "opportunity", "value": "yes"})
+    other_report = report.model_copy(update={"id": 3, "reason": "broken_link",
+                                             "dimension": "reachability", "value": "broken"})
+    active = AsyncMock(return_value=[report, confirmed, other_report])
+    monkeypatch.setattr(service._feedback, "active_feedback", active)
+    body = SearchBody(query=query, university="Uni Example")
+    result = await service.search(body)
+    assert result.total == 1
+    assert [h.position_id for h in result.hits] == [2]  # Same URL family unaffected.
+    inspected = await service.search(body.model_copy(update={"include_reported": True}))
+    assert inspected.total == 2
+    assert len(next(h for h in inspected.hits if h.position_id == 1).feedback) == 3
+    active.return_value = [confirmed, other_report]
+    assert (await service.search(body)).total == 1  # Undo one dimension only.
+    active.return_value = [confirmed]
+    restored = await service.search(body)
+    assert restored.total == 2  # Positive feedback doesn't hide; no index rewrite.
 
 
 async def test_search_defaults_to_verified_and_can_include_probable(container, qdrant):

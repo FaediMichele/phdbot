@@ -45,6 +45,7 @@ from phd_searcher.pipeline.review_context import (
     select_evidence_document,
 )
 from phd_searcher.pipeline.rule_sweep import RULE_SWEEP_VERSION, apply_rule_sweep
+from phd_searcher.pipeline.umantis import umantis_detail_content
 from phd_searcher.position_types import classify_position
 from phd_searcher.screening import (
     ScreeningDecision,
@@ -301,6 +302,9 @@ def _remove_page_chrome(root: Tag | BeautifulSoup) -> None:
     ):
         node.decompose()
     for node in list(root.find_all(True)):
+        # Decomposing a parent also destroys descendants already in this list.
+        if node.decomposed:
+            continue
         attributes = " ".join(
             [
                 str(node.get("id") or ""),
@@ -348,6 +352,11 @@ def _clean_detail_document(
                 return cleaned
 
     if html:
+        scoped_content = umantis_detail_content(html, expected_url)
+        if scoped_content is not None:
+            cleaned = _readable_html_text(scoped_content)
+            if len(" ".join(cleaned.split())) >= _MIN_GENERIC_DETAIL_CHARS:
+                return cleaned
         soup = BeautifulSoup(html, "html.parser")
         hinted: list[Tag] = []
         for node in soup.find_all(True):

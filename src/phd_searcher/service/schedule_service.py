@@ -17,10 +17,13 @@ from sqlalchemy.sql import Select
 from phd_searcher.database.models.macro import MacroRun, SavedMacro
 from phd_searcher.database.models.pipeline_run import PipelineRun
 from phd_searcher.database.models.scheduled_job import ScheduledJob
+from phd_searcher.database.models.university import University
 from phd_searcher.pipeline.runner import STAGES, PipelineError, PipelineRunner
+from phd_searcher.service.governor_admission import governor_block_reason
 from phd_searcher.service.macro_service import MacroService
+from phd_searcher.thermal import get_thermal_guard
 from phd_searcher.typedef.pipeline import PipelineStartBody
-from phd_searcher.typedef.schedule import ScheduleCreate, ScheduleState, ScheduleTarget, ScheduleView
+from phd_searcher.typedef.schedule import GovernorPlan, ScheduleCreate, ScheduleState, ScheduleTarget, ScheduleView
 
 ROME = ZoneInfo("Europe/Rome")
 _ACTIVE_STATES = ("scheduled", "waiting_pipeline", "starting", "running")
@@ -142,6 +145,9 @@ class ScheduleService:
             macro_id=job.macro_id,
             pipeline_run_id=job.pipeline_run_id,
             macro_run_id=job.macro_run_id,
+            governor_plan=GovernorPlan.model_validate(job.payload["_governor_plan"])
+            if "_governor_plan" in job.payload
+            else None,
             attempts=job.attempts,
             next_attempt_at=_utcaware(job.next_attempt_at),
             error=job.error,
@@ -166,6 +172,8 @@ class ScheduleService:
                 if body.pipeline is not None
                 else {}
             )
+            if body.governor_plan is not None:
+                payload["_governor_plan"] = body.governor_plan.model_dump(mode="json")
             job = ScheduledJob(
                 target=body.target,
                 state="scheduled",
@@ -187,9 +195,7 @@ class ScheduleService:
             stmt = select(ScheduledJob)
             if active_only:
                 stmt = stmt.where(ScheduledJob.state.in_(_ACTIVE_STATES))
-            rows = (
-                await session.execute(stmt.order_by(ScheduledJob.id.desc()).limit(limit))
-            ).scalars().all()
+            rows = (await session.execute(stmt.order_by(ScheduledJob.id.desc()).limit(limit))).scalars().all()
             return [self._view(row) for row in rows]
 
     async def get(self, job_id: int) -> ScheduleView | None:
@@ -251,6 +257,8 @@ class ScheduleService:
 
     async def tick(self) -> None:
         await self._reconcile_running()
+        if get_thermal_guard().blocked:
+            return
         for job_id in await self._claim_due():
             await self._dispatch(job_id)
 
@@ -267,6 +275,9 @@ class ScheduleService:
             return [job.id for job in jobs]
 
     async def _dispatch(self, job_id: int) -> None:
+        if get_thermal_guard().blocked:
+            await self._defer(job_id, "waiting for CPU thermal cooldown")
+            return
         async with self._session_maker() as session:
             job = await session.get(ScheduledJob, job_id)
             if job is None or job.state != "starting":
@@ -277,6 +288,25 @@ class ScheduleService:
 
         if target == "pipeline":
             body = PipelineStartBody.model_validate(payload)
+            expansion_id = payload.get("expansion_institution_id")
+            if expansion_id is not None:
+                # Name-scoped pipeline jobs must remain unambiguous even if the
+                # catalogue changed while this job waited or before a retry.
+                async with self._session_maker() as session:
+                    identifiers = (
+                        (
+                            await session.scalars(
+                                select(University.id).where(
+                                    University.name.ilike(f"%{body.name}%"),
+                                )
+                            )
+                        ).all()
+                        if body.name
+                        else []
+                    )
+                if list(identifiers) != [expansion_id]:
+                    await self._fail(job_id, "catalog expansion scope changed; inspect institution before retry")
+                    return
             stages = [name for name in STAGES if body.stages is None or name in body.stages]
             limits = body.limits.model_dump(exclude_none=True, by_alias=True) if body.limits else {}
             params: dict[str, object] = {
@@ -285,6 +315,11 @@ class ScheduleService:
                 "max_pages": body.max_pages,
                 "name": body.name,
             }
+            if "_governor_plan" in payload:
+                reason = governor_block_reason(payload["_governor_plan"])
+                if reason:
+                    await self._defer_governor(job_id, reason)
+                    return
             try:
                 pipeline_run_id = await self._pipeline.ensure_scheduled(job_id, stages, params)
             except PipelineError as exc:
@@ -332,6 +367,22 @@ class ScheduleService:
             )
             await session.commit()
 
+    async def _defer_governor(self, job_id: int, reason: str) -> None:
+        # Waiting for manual unpause is not a failed execution attempt.
+        async with self._session_maker() as session:
+            await session.execute(
+                update(ScheduledJob)
+                .where(ScheduledJob.id == job_id, ScheduledJob.state == "starting")
+                .values(
+                    state="waiting_pipeline",
+                    lease_until=None,
+                    next_attempt_at=_utcnow() + timedelta(seconds=_BUSY_RETRY_SECONDS),
+                    attempts=func.greatest(ScheduledJob.attempts - 1, 0),
+                    error=reason[:2000],
+                )
+            )
+            await session.commit()
+
     async def _defer(self, job_id: int, reason: str) -> None:
         now = _utcnow()
         async with self._session_maker() as session:
@@ -340,6 +391,7 @@ class ScheduleService:
                 .where(ScheduledJob.id == job_id, ScheduledJob.state == "starting")
                 .values(
                     state="waiting_pipeline",
+                    attempts=func.greatest(ScheduledJob.attempts - 1, 0),
                     next_attempt_at=now + timedelta(seconds=_BUSY_RETRY_SECONDS),
                     lease_until=None,
                     error=reason[:2_000],
@@ -365,14 +417,15 @@ class ScheduleService:
     async def _reconcile_running(self) -> None:
         async with self._session_maker() as session:
             jobs = (
-                await session.execute(
-                    select(ScheduledJob).where(ScheduledJob.state == "running").order_by(ScheduledJob.id)
+                (
+                    await session.execute(
+                        select(ScheduledJob).where(ScheduledJob.state == "running").order_by(ScheduledJob.id)
+                    )
                 )
-            ).scalars().all()
-            targets = [
-                (job.id, job.target, job.pipeline_run_id, job.macro_run_id, job.attempts)
-                for job in jobs
-            ]
+                .scalars()
+                .all()
+            )
+            targets = [(job.id, job.target, job.pipeline_run_id, job.macro_run_id, job.attempts) for job in jobs]
         if any(target == "pipeline" for _, target, _, _, _ in targets):
             # Riconcilia l'advisory lock dopo un eventuale riavvio dell'API.
             await self._pipeline.status()
@@ -392,9 +445,7 @@ class ScheduleService:
             row = await session.get(PipelineRun, pipeline_run_id) if pipeline_run_id is not None else None
             if row is None:
                 row = (
-                    await session.execute(
-                        select(PipelineRun).where(PipelineRun.scheduled_job_id == job_id).limit(1)
-                    )
+                    await session.execute(select(PipelineRun).where(PipelineRun.scheduled_job_id == job_id).limit(1))
                 ).scalar_one_or_none()
             if row is None:
                 await session.execute(
@@ -451,9 +502,7 @@ class ScheduleService:
                     )
             else:
                 await session.execute(
-                    update(ScheduledJob)
-                    .where(ScheduledJob.id == job_id)
-                    .values(pipeline_run_id=row.id)
+                    update(ScheduledJob).where(ScheduledJob.id == job_id).values(pipeline_run_id=row.id)
                 )
             await session.commit()
 
@@ -462,9 +511,7 @@ class ScheduleService:
             row = await session.get(MacroRun, macro_run_id) if macro_run_id is not None else None
             if row is None:
                 row = (
-                    await session.execute(
-                        select(MacroRun).where(MacroRun.scheduled_job_id == job_id).limit(1)
-                    )
+                    await session.execute(select(MacroRun).where(MacroRun.scheduled_job_id == job_id).limit(1))
                 ).scalar_one_or_none()
             if row is None:
                 await session.execute(
@@ -477,9 +524,7 @@ class ScheduleService:
             elif row.state == "failed":
                 await self._finish_in_session(session, job_id, "failed", row.error or "macro failed")
             else:
-                await session.execute(
-                    update(ScheduledJob).where(ScheduledJob.id == job_id).values(macro_run_id=row.id)
-                )
+                await session.execute(update(ScheduledJob).where(ScheduledJob.id == job_id).values(macro_run_id=row.id))
             await session.commit()
 
     @staticmethod

@@ -3,7 +3,12 @@ import json
 import pytest
 
 from phd_searcher.pipeline.quality_gate import QualityDisposition, inspect_candidate
-from phd_searcher.pipeline.source_validation import employer_evidence, page_state
+from phd_searcher.pipeline.source_validation import (
+    employer_evidence,
+    listing_body_missing,
+    page_state,
+    staff_directory_evidence,
+)
 
 
 @pytest.mark.parametrize("status", [404, 410])
@@ -58,3 +63,63 @@ def test_external_ats_requires_employer_specific_jobposting_not_mention():
 @pytest.mark.parametrize("title", ["Not Found", "404", "Page not found"])
 def test_old_error_extractions_are_quarantined_not_searchable(title):
     assert inspect_candidate(title=title, url="https://example.org/jobs").disposition == QualityDisposition.QUARANTINE
+
+
+def _contacts(count=3):
+    # Observed directory renders email addresses as images instead of mailto.
+    return "".join(
+        f'<div><h3>Person {i}</h3><div><b>Main office/laboratory:</b> Florence '
+        f'<img src="/image.php?t=person{i}@example.org"></div></div>'
+        for i in range(count)
+    )
+
+
+def test_contact_directory_is_deferred_without_name_based_rejection():
+    assert staff_directory_evidence(_contacts())
+    assert not staff_directory_evidence(_contacts(2))
+    assert not staff_directory_evidence(_contacts().replace("@", " at "))
+
+
+@pytest.mark.parametrize("positive", [
+    '<a href="/job/1">PhD in optics</a>',
+    '<a href="/apply">Apply now</a>',
+    '<script type="application/ld+json">{"@type":"JobPosting"}</script>',
+])
+def test_recruitment_evidence_preserves_mixed_contact_pages(positive):
+    assert not staff_directory_evidence(_contacts() + positive)
+
+
+def test_repeated_labels_in_one_contact_block_are_not_a_directory():
+    assert not staff_directory_evidence(
+        '<div>' + '<b>Office:</b>' * 3 + 'contact@example.org</div>'
+    )
+
+
+def test_heading_only_recruitment_board_is_missing_evidence_not_no_openings():
+    html = '<main><nav><div><h2>Research</h2><a href="/about">About us</a></div></nav><h1>Actuele vacatures</h1><div><h2>Actuele vacatures</h2><div></div></div></main>'
+    assert listing_body_missing(html)
+    assert page_state(html) is None
+    assert not listing_body_missing('<h1>Actuele vacatures</h1>')
+    assert not listing_body_missing('<main><h1>Our team</h1></main>')
+
+
+@pytest.mark.parametrize("body", [
+    '<h2>PhD in optics</h2>',
+    '<p>Apply for our research fellowship.</p>',
+    '<a href="https://employer.example/apply">Apply</a>',
+    '<iframe src="https://employer.example/jobs"></iframe>',
+    '<img src="/vacancy.png">',
+    '<form action="/apply"></form>',
+    '<button>Load jobs</button>',
+    '<script type="application/ld+json">{"@type":"JobPosting"}</script>',
+    '<noscript>PhD in optics</noscript>',
+    '<div class="loading">Loading vacancies</div>',
+    '<nav><a href="/jobs/123">PhD in optics</a></nav>',
+    '<aside><iframe src="https://ats.example/jobs"></iframe></aside>',
+])
+def test_sparse_or_dynamic_positive_evidence_is_not_a_heading_only_board(body):
+    assert not listing_body_missing(f'<main><h1>Vacancies</h1>{body}</main>')
+
+
+def test_recruitment_heading_link_preserves_external_board_route():
+    assert not listing_body_missing('<main><h1><a href="https://ats.example/jobs">Jobs</a></h1></main>')

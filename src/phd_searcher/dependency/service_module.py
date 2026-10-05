@@ -1,6 +1,7 @@
 from injector import Binder, Module
 
 from phd_searcher.service.catalog_service import CatalogService
+from phd_searcher.service.expansion_service import ExpansionService
 from phd_searcher.service.export_service import ExportService
 from phd_searcher.service.feedback_service import FeedbackService
 from phd_searcher.service.macro_service import MacroService
@@ -16,3 +17,4 @@ class ServiceModule(Module):
         binder.bind(FeedbackService)
         binder.bind(MacroService)
         binder.bind(ScheduleService)
+        binder.bind(ExpansionService)

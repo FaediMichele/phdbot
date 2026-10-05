@@ -85,6 +85,61 @@ until a future audited feedback policy is explicitly implemented.
 
 ## Persistent schedules
 
+### Bounded expansion of the imported research catalog
+
+Coverage has an **Explore research institutions** panel. Preview is read-only:
+it selects up to five European research entities still `catalogued`, without
+known listing sources. Optional country/name filters narrow the cohort. Ordering
+balances countries within a batch and rotates them using durable admission history
+between batches, with a stable registry-ID hash. It is not a hiring prediction.
+
+**Activate & schedule selected** creates one durable pipeline job per institution:
+discovery -> schema -> scrape -> quality -> index. Defaults are one discovery,
+three sources per source stage, three pages per source, and150 index candidates.
+The API accepts at most10 institutions, five sources and five pages. No registry
+reimport, deep review or recurring full-catalog scan is triggered. Existing
+sources should use a scoped collection run instead of rediscovery.
+
+- `GET /v1/catalog/expansion?country=IT&query=Optics&limit=5`: preview and aggregate
+  imported-catalog coverage. `with_indexed_markers` is not a fresh Search count.
+- `POST /v1/catalog/expansion` with `{"institution_ids":[14540]}`: activate and
+  enqueue that reviewed cohort. The IDs in this example are illustrative, not
+  a recurring institution seed list.
+- Concurrent/repeated requests return the existing schedule, including completed
+  or failed jobs. Inspect and Resume failed work rather than requesting it again.
+- Cancel through the ordinary schedule controls. Activation remains `pending`;
+  cancellation removes the scheduled execution, not the catalog admission. A
+  cancelled expansion can be explicitly queued again while still unprocessed.
+- Ambiguous institution-name scopes and names containing SQL wildcard characters
+  are refused; the scheduler rechecks scope before dispatch. No broad fallback.
+
+Each institution publishes before the next institution finishes. Source failures
+stay diagnosable; this is not yet per-source publication within a run, adaptive
+scrape cadence, registry-release monitoring, or a universal autonomous repair queue.
+
+Heading-only recruitment boards defer as `source_preflight:missing_content` after
+rendering, rather than generating a schema from the page title. These holds become
+eligible for schema recheck after seven days; they do not establish absence of jobs.
+Concrete role text, embedded boards and application links prevent this shortcut.
+
+Umantis HTML boards can be retained from an explicit official recruitment-page
+link even if model selection omits them. Schema admission re-fetches that official
+page and verifies the exact tenant/language board; a stored referrer is insufficient.
+Search forms, subscription and login routes are outside this automatic retention
+rule (they may still appear among model-selected candidates). During collection,
+an application-login URL is replaced only when the already-fetched board contains
+a public detail anchor with matching vacancy ID, language, title and host. This
+repairs navigation without extra requests or schema generations. Existing records
+need an audited identity-preserving repair if they were collected before this rule.
+
+An audited funding adapter currently covers Honor Frost's scholarship page. It
+revalidates degree tabs and separate offer sections on each fetch. Recurring dates
+remain yearless and targeted deadlines stay with their own offer; changed layouts
+fail visibly. The degree is retained in the title and evidence, while grants use
+`research_fellowship`: university admission is a separate application. Do not count
+recipient biographies or scholar-navigation categories as opportunities. See
+[the measured expansion report](EXPANSION_CANARY_20260923.md) for evidence and limits.
+
 - Schedule times entered by the GUI are interpreted in `Europe/Rome` and
   persisted in UTC.
 - A scheduled pipeline waits for the cluster-wide run lock and attaches to at
@@ -132,3 +187,18 @@ with `make completion-install schedule=N PROJECT_DIR=/absolute/path` when needed
    local time.
 6. Workload is bounded to finish with a safety margin; otherwise Stop and
    Resume at the next low-cost window.
+
+### Dynamic listing and feedback safeguards (2026-09-22)
+
+Recruitment lists with an observed loading indicator and a unique list container
+can receive a CSS-only rendering hint. Schema discovery makes one additional
+bounded observation (6 seconds maximum wait); successful schemas retain that hint
+for ordinary scrapes. It is not copied blindly to sibling sources. Timeouts are
+technical failures, not evidence that an institution has no opportunities.
+
+Active issue reports now hide the exact position in API search as well as the UI,
+without rewriting its screening verdict or vector. Positive confirmations do not
+hide records or overrule reports in other dimensions. `include_reported: true`
+and the **show reported items** control retain inspection/undo; search hits include
+their active feedback. Retracting one report leaves other active reports effective.
+No deadline, closure or rejection is propagated to adjacent URLs or institutions.

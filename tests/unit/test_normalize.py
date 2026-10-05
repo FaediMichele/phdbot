@@ -1,5 +1,7 @@
 from datetime import date
 
+import pytest
+
 from phd_searcher.pipeline.normalize import (
     extract_deadline,
     extract_research_group,
@@ -30,6 +32,25 @@ def test_parse_deadline_embedded_numeric_date():
 def test_parse_deadline_unparseable_is_none():
     assert parse_deadline("rolling admission") is None
     assert parse_deadline(None) is None
+
+
+def test_closing_date_survives_storage_and_reparse_beside_start_date():
+    text = ('Application closing date: September 30th, 2026 '
+            'Expected position starting date: January 1st, 2027 Requirements: PhD')
+    raw, deadline = extract_deadline(text)
+    assert deadline == date(2026, 9, 30)
+    assert raw is not None
+    assert '2027' not in raw
+    assert parse_deadline(raw) == deadline
+    # Previously stored contaminated snippets must also parse consistently.
+    assert parse_deadline(text) == deadline
+
+
+def test_application_range_excludes_following_interview_metadata():
+    text = ('Applications between 1 September 2026 and 30 September 2026. '
+            'Interview date: 15 October 2026')
+    assert extract_deadline(text)[1] == date(2026, 9, 30)
+    assert parse_deadline(text) == date(2026, 9, 30)
 
 
 def test_null_application_deadline_does_not_borrow_the_start_date():
@@ -240,3 +261,55 @@ def test_extract_terms_joins_a_salary_label_to_its_markdown_value():
     )
 
     assert compensation == "Salary: £60,484 - £73,058 per annum"
+
+
+def test_guest_research_windows_do_not_borrow_parenthetical_start_dates():
+    text = (
+        "Application deadlines are April 30th for the Winter Semester "
+        "(starting no earlier than October 1, 2026) and October 31st "
+        "for the Summer Semester (starting April 1, 2027)."
+    )
+    assert extract_deadline(text) == (None, None)
+    assert parse_deadline(text) is None
+    assert parse_deadline("Deadlines: 30 April 2026; 31 October 2026") == date(2026, 10, 31)
+
+
+def test_explicit_deadlines_survive_start_asides_and_reparse():
+    text = (
+        "Application deadlines: 30 April 2026 (starting October 1, 2026) "
+        "and 31 October 2026 (commencing April 1, 2027)."
+    )
+    raw, deadline = extract_deadline(text)
+    assert deadline == date(2026, 10, 31)
+    assert parse_deadline(raw) == deadline
+    assert raw is not None
+    assert "2027" not in raw
+    assert parse_deadline("31 October 2026 (beginning April 1, 2027)") == deadline
+
+
+def test_parenthetical_application_deadline_is_not_a_start_aside():
+    assert parse_deadline("Apply (deadline 31 October 2026)") == date(2026, 10, 31)
+    assert extract_deadline("Apply (application deadline 31 October 2026)")[1] == date(2026, 10, 31)
+
+
+@pytest.mark.parametrize('reference_date', ['01.10.2026', '19.10.2026', '19.10.2027'])
+def test_application_submission_deadline_excludes_reference_letters(reference_date):
+    text = (
+        'The deadline for submitting your application is 12.10.2026. '
+        f'The deadline for receiving the reference letters is {reference_date}. '
+        'Selection symposium in February 2027.'
+    )
+    raw, deadline = extract_deadline(text)
+    assert deadline == date(2026, 10, 12)
+    assert parse_deadline(raw) == deadline
+    assert reference_date not in raw
+
+
+@pytest.mark.parametrize('text', [
+    'The deadline for receiving the reference letters is 19.10.2026',
+    'Reference letters deadline: 19.10.2026',
+    'Deadline for submitting the manuscript is 12.10.2026',
+    'Deadline for submitting your application is October 12. Reference letters deadline: 19.10.2026',
+])
+def test_reference_or_unrelated_deadlines_do_not_supply_application_dates(text):
+    assert extract_deadline(text) == (None, None)

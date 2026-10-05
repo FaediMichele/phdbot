@@ -1,7 +1,7 @@
 UV ?= $(if $(wildcard $(HOME)/.local/bin/uv),$(HOME)/.local/bin/uv,uv)
 PROJECT_DIR ?= $(CURDIR)
 
-.PHONY: help setup run stop test test-unit test-integration lint ruff mypy mypy-ci mypy-stop format lock sync migrate revision pipeline audit-searchability display-refresh-install display-refresh-status completion-install completion-status clean
+.PHONY: help setup run stop test test-unit test-integration lint ruff mypy mypy-ci mypy-stop format lock sync migrate revision pipeline audit-searchability display-refresh-install display-refresh-status completion-install completion-status thermal-events-install thermal-events-status clean
 
 ALEMBIC = $(UV) run alembic -c src/phd_searcher/database/alembic.ini
 
@@ -24,6 +24,8 @@ help:
 	@echo "  make display-refresh-status  - Inspect the host display supervisor"
 	@echo "  make completion-install schedule=N - Guard a scheduled run and deploy/index on completion"
 	@echo "  make completion-status schedule=N  - Inspect the completion guard"
+	@echo "  make thermal-events-install - Install CPU thermal desktop/Valet notifications"
+	@echo "  make thermal-events-status  - Inspect the thermal notification timer"
 	@echo "  make clean            - Remove virtualenvs"
 
 setup:
@@ -108,6 +110,28 @@ completion-install:
 completion-status:
 	@test -n "$(schedule)" || { echo "usage: make completion-status schedule=<job-id>"; exit 1; }
 	systemctl --user status --no-pager "phdbot-completion@$(schedule).service"
+
+thermal-events-install:
+	install -d -m 0755 "$(HOME)/.config/systemd/user"
+	sed 's|@PROJECT_DIR@|$(abspath $(PROJECT_DIR))|g' deploy/systemd/phdbot-thermal-events.service | install -m 0644 /dev/stdin "$(HOME)/.config/systemd/user/phdbot-thermal-events.service"
+	install -m 0644 deploy/systemd/phdbot-thermal-events.timer "$(HOME)/.config/systemd/user/phdbot-thermal-events.timer"
+	systemctl --user daemon-reload
+	systemctl --user enable --now phdbot-thermal-events.timer
+
+.PHONY: wave-events-install wave-events-status
+
+wave-events-install:
+	install -d -m 0755 "$(HOME)/.config/systemd/user"
+	sed 's|@PROJECT_DIR@|$(abspath $(PROJECT_DIR))|g' deploy/systemd/phdbot-wave-events.service | install -m 0644 /dev/stdin "$(HOME)/.config/systemd/user/phdbot-wave-events.service"
+	install -m 0644 deploy/systemd/phdbot-wave-events.timer "$(HOME)/.config/systemd/user/phdbot-wave-events.timer"
+	systemctl --user daemon-reload
+	systemctl --user enable --now phdbot-wave-events.timer
+
+wave-events-status:
+	systemctl --user status --no-pager phdbot-wave-events.timer
+
+thermal-events-status:
+	systemctl --user status --no-pager phdbot-thermal-events.timer
 
 clean:
 	rm -rf .venv tests/integration/.venv

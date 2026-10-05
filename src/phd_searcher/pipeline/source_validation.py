@@ -88,5 +88,73 @@ def page_state(html: str, status: int | None = None) -> str | None:
     return None
 
 
+_LISTING_HEADINGS = frozenset({
+    "jobs", "vacancies", "current vacancies", "open positions", "job opportunities",
+    "actuele vacatures", "vacatures", "stellenangebote", "offres d emploi",
+})
+
+
+def listing_body_missing(html: str) -> bool:
+    """Observe a heading-only board after rendering, without claiming no jobs.
+
+    Require an explicit main region and recruitment heading. Any remaining
+    text, application link, structured job or embedded/media content makes us
+    abstain. Deferred sources are retried; no vacancy verdict is inherited.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    main = soup.find("main") or soup.find(id="content")
+    if main is None or re.search(r"jobposting", html, re.I):
+        return False
+    # Some sites misuse navigation/aside regions for their real job cards.
+    # Preserve recognizable role evidence and embedded boards before cleanup.
+    if main.select_one("iframe, embed, object, canvas, form") or re.search(
+        r"\b(?:ph[.\s]?d|doctoral|postdoc(?:toral)?|professor|researcher|fellowship)\b",
+        main.get_text(" ", strip=True), re.I,
+    ):
+        return False
+    for node in main.select("nav, aside, header, footer, script, style"):
+        if not node.decomposed:
+            node.decompose()
+    headings = [h for h in main.find_all(["h1", "h2"]) if _fold(h.get_text(" ", strip=True)) in _LISTING_HEADINGS]
+    if not headings:
+        return False
+    # A heading itself may link to an actual external board: keep that route.
+    if main.select_one("a[href], iframe, embed, object, img, canvas, form, input, button, select, textarea"):
+        return False
+    for heading in headings:
+        heading.decompose()
+    return not main.get_text(" ", strip=True)
+
+
 class SchemaDeferredError(Exception):
     """A recorded preflight disposition, not an LLM/transport failure."""
+
+
+def staff_directory_evidence(html: str) -> bool:
+    """Defer repeated contact profiles, never infer a vacancy verdict from names.
+
+    Require repeated office labels AND personal email evidence in their blocks.
+    A mixed board with recruitment links or structured jobs must be left alone.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    if '"JobPosting"' in html or any(
+        re.search(
+            r"\b(phd|postdoctoral|doctoral|researcher|professor|apply|vacancy|"
+            r"bewerben|dottorato|assegno|borsa)\b",
+            a.get_text(" ", strip=True), re.I,
+        )
+        for a in soup.find_all("a", href=True)
+    ):
+        return False
+    blocks: set[int] = set()
+    for label in soup.find_all(["b", "strong"]):
+        if _fold(label.get_text(" ", strip=True)) not in {
+            "main office laboratory", "office", "office location", "ufficio",
+        }:
+            continue
+        block = label.parent
+        if block is None:
+            continue
+        if re.search(r"[\w.+-]+@[\w.-]+\.[a-z]{2,}", str(block), re.I):
+            blocks.add(id(block))
+    return len(blocks) >= 3

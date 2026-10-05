@@ -37,6 +37,7 @@ from phd_searcher.pipeline import (
     universities,
 )
 from phd_searcher.pipeline.progress import Progress
+from phd_searcher.thermal import get_thermal_guard
 from phd_searcher.typedef.pipeline import DeferredQueueInfo, PipelineStatus, RunState, StageInfo
 
 StageFn = Callable[..., Coroutine[object, object, int]]
@@ -332,6 +333,7 @@ class PipelineRunner:
     async def _run(self, run_id: int, stages: list[str], params: dict[str, object]) -> None:
         try:
             for name in stages:
+                get_thermal_guard().context = {"run_id": run_id, "stage": name}
                 progress = self._make_progress(run_id, name)
                 await self._update(
                     run_id,
@@ -351,8 +353,13 @@ class PipelineRunner:
                 }
                 if name == "scrape":
                     stage_params["max_pages"] = cast("int | None", params.get("max_pages"))
-                result = await STAGES[name](self._container, **stage_params)
-                await progress.finish()
+                async with progress.measure("stage"):
+                    await progress.check_stop()
+                    if bool(progress.should_stop):
+                        await self._finish_active_interval(run_id, state="stopped", where_state="stopping")
+                        return
+                    result = await STAGES[name](self._container, **stage_params)
+                    await progress.finish()
                 if progress.should_stop:
                     # stadio interrotto: resta fuori da stages_done così resume lo ripete
                     await self._finish_active_interval(run_id, state="stopped", where_state="stopping")
@@ -372,6 +379,7 @@ class PipelineRunner:
             except Exception:  # DB giù: il task muore pulito, reconcile marcherà la run quando il DB torna
                 print(f"pipeline runner: cannot persist failure: {exc}")
         finally:
+            get_thermal_guard().context = {}
             await self._release_lock()
 
     def _make_progress(self, run_id: int, stage: str) -> Progress:

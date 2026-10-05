@@ -1,0 +1,7 @@
+[Unit]
+Description=Notify Valet when every schedule of a registered PHDBOT wave is terminal
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 @PROJECT_DIR@/scripts/wave_event_bridge.py --project @PROJECT_DIR@
+TimeoutStartSec=120

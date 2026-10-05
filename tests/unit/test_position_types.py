@@ -3,6 +3,39 @@ import pytest
 from phd_searcher.position_types import classify_position
 
 
+@pytest.mark.parametrize(("title", "kind"), [
+    ("Microscopist and Imaging Specialist (PhD level)", "research_staff"),
+    ("Research Engineer (PhD required)", "research_staff"),
+    ("Software developer with a PhD", "other"),
+    ("Postdoctoral scientist (PhD level)", "postdoc"),
+    ("PhD Student Position - Learning Lab", "phd"),
+])
+def test_doctorate_qualification_is_distinct_from_doctoral_training(title, kind):
+    assert classify_position(title) == kind
+
+
+def test_qualification_rule_preserves_explicit_operator_type():
+    assert classify_position("Imaging Specialist (PhD level)", explicit="phd") == "phd"
+
+
+@pytest.mark.parametrize("title", [
+    "Postdoktorand:in (m/w/d) für Ozean- und Klimamodellierung und Ozeandynamik",
+    "Postdoktorandin für Ozeandynamik",
+    "Postdoktoranden in der Klimaforschung",
+    "Postdoktorandinnen in der Klimaforschung",
+    "Post-Doktorand (m/w/d) für Informatik",
+    "Post Doktorand*in für Informatik",
+    "Postdoktorale Forschung in der Biologie",
+])
+def test_german_postdoctoral_titles_do_not_match_embedded_doctoral_word(title):
+    assert classify_position(title, "Abgeschlossene Promotion / PhD erforderlich.") == "postdoc"
+
+
+def test_german_doctoral_title_keeps_priority_over_postdoctoral_body_context():
+    assert classify_position("Doktorand:in für Ozeandynamik", "Zusammenarbeit mit Postdoktoranden.") == "phd"
+    assert classify_position("Postdoktorandin für Ozeandynamik", explicit="research_staff") == "research_staff"
+
+
 @pytest.mark.parametrize(
     "title",
     [
@@ -116,3 +149,19 @@ def test_scientific_roles_are_not_degrees_or_funding_mentions(title):
 ])
 def test_named_nonresearch_jobs_do_not_borrow_degree_or_colleague_roles(title):
     assert classify_position(title, "A PhD is required. You will work with doctoral students and postdoctoral fellows.") == "other"
+
+
+@pytest.mark.parametrize('title', [
+    'Max Planck Research Group leader (m/f/x) (W2)',
+    'Research Group Leader (PhD required)',
+    'Scientific Group Head with a PhD',
+])
+def test_research_leadership_does_not_inherit_supervised_student_type(title):
+    body = 'Our PhD students join doctoral programmes. The leader supervises postdoctoral fellows and students.'
+    assert classify_position(title, body, 'other') == 'research_staff'
+
+
+def test_unspecified_group_leader_does_not_become_doctoral_from_body():
+    assert classify_position('Group Leader', 'The team also hosts PhD students.') == 'other'
+    assert classify_position('PhD student position', 'Work with our research group leader.') == 'phd'
+    assert classify_position('Research Group Leader', explicit='faculty') == 'faculty'

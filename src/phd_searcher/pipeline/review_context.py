@@ -243,6 +243,13 @@ _CONCRETE_VACANCY_KIND_SIGNAL = re.compile(
     r"puestos?|vacantes?)\b",
     re.I,
 )
+# A singular advertised doctoral project remains a vacancy even when its
+# benefits describe coursework in the surrounding doctoral programme.
+_DOCTORAL_PROJECT_RECRUITMENT_SIGNAL = re.compile(
+    r"\b(?:invit(?:e|es|ing)\s+applications\s+for|(?:we\s+are\s+)?offering)\s+"
+    r"(?:a|one)\s+(?:ph\.?d\.?|doctoral)\s+(?:thesis|research\s+project|position)\b",
+    re.I,
+)
 _SPECIFIC_PROJECT_VACANCY_SIGNAL = re.compile(
     r"\b(?:reference\s+number|pgr-[a-z]?[- ]?\d+|type\s+of\s+research\s+degree|"
     r"funding\s+(?:funded|unfunded))\b",
@@ -705,7 +712,8 @@ def opportunity_kind_evidence_supports(
     text = compact_text(" ".join(quotes))
     if opportunity_kind == "vacancy":
         return bool(
-            _CONCRETE_VACANCY_KIND_SIGNAL.search(text)
+            _DOCTORAL_PROJECT_RECRUITMENT_SIGNAL.search(text)
+            or _CONCRETE_VACANCY_KIND_SIGNAL.search(text)
             or (
                 _SPECIFIC_PROJECT_VACANCY_SIGNAL.search(text)
                 and _TYPE_SIGNALS["phd"].search(text)
@@ -715,7 +723,8 @@ def opportunity_kind_evidence_supports(
     if opportunity_kind == "programme":
         current_date = today or local_today()
         return bool(
-            not _SPECIFIC_PROJECT_VACANCY_SIGNAL.search(text)
+            not _DOCTORAL_PROJECT_RECRUITMENT_SIGNAL.search(text)
+            and not _SPECIFIC_PROJECT_VACANCY_SIGNAL.search(text)
             and _PROGRAMME_KIND_SIGNAL.search(text)
             and (
                 _PROGRAMME_ACTIONABLE_INTAKE_SIGNAL.search(text)
