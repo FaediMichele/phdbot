@@ -1,5 +1,9 @@
 # Gestione termica: ricerca e proposta, 5 ottobre 2026
 
+**Aggiornamento dopo chiarimento dell’utente:** privilegiare la modulazione del
+programma, senza modificare impostazioni del PC. La prova firmware proposta qui
+è superata dal [piano applicativo](THERMAL_APPLICATION_CONTROL_20261005.md).
+
 ## Risultato operativo
 
 Ripristino Ollama autorizzato ed eseguito alle 09:20, a coda vuota e sotto lock

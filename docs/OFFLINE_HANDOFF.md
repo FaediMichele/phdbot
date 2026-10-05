@@ -132,3 +132,8 @@ L'overlay locale di recupero avvia direttamente `ollama serve` senza download;
 l'avvio Compose ordinario mantiene invece il suo entrypoint originale.
 [Ricerca termica e prossima prova proposta](THERMAL_OPTIONS_20261005.md): nessuna
 nuova impostazione energetica host applicata, nessuna wave duplicata.
+
+Priorità aggiornata: modulare PHDBOT senza cambiare impostazioni del PC.
+Il guard attuale attende confini sicuri e non interrompe una generazione già
+in corso; il nuovo controller è ancora una proposta. Vedi la
+[ricerca applicativa](THERMAL_APPLICATION_CONTROL_20261005.md).
