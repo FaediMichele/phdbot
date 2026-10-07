@@ -160,3 +160,33 @@ Dopo il riavvio dei servizi la UI servita coincide con il file corretto:
 accordion scaduti, calendario e tab User preservati. Non ripetere la run.
 Le sei fonti mai raccolte sono recovery delle run 274/1368/1504/1867,
 non nuovo lavoro indipendente pronto da accodare.
+
+Aggiornamento 6 ottobre, 06:46: batch refresh da schemi esistenti in corso.
+Schedule3682/run3822 osservata running;3683–3701 accodate.20 istituzioni,
+40 fonti, scrape→quality→index, max3pagine/fonte,index10/job. Stima totale
+40min approssimativa. Richieste/ricevute var/refresh-20261006/.
+Governor_plan applicato a ogni job, una notifica aggregata di fine batch.
+Stato verificato con query scheduled_jobs sugli ID3682–3701; timer
+phdbot-wave-events.timer active. Non ricreare questi job.
+Priorità e richieste persistenti in USER_REQUESTS_TODO.md.
+
+6 ottobre06:54: primo batch3682–3701 concluso20/20 in400s,230upsert,
+330quality,28index (non necessariamente28nuovi). Secondo batch3702–3801
+accodato:100istituzioni/219fonti,stima37min,stessi stadi/limiti locali.
+Una notifica wave-cached-refresh-b-20261006 al terminale. Ricevute
+var/refresh-20261006-b/. Non duplicare job completati o attivi.
+
+7 ottobre05:32: ricevuta batchB confrontata col DB:99done,1failed
+(schedule3731/run3872,IMD URL HTTP429),scrape1225,quality1371,index53.
+Esistono inoltre607 schedule precedenti 3802–4408:605done,2failed
+(4046/run4178,4260/run4394), non create né modificate da questo lavoro.
+BatchC schedules4409–4508 preparato:100istituzioni/258fonti,stima26m40s;
+all'ultimo controllo ancora scheduled, nessuna avviata; run_at 05:31:57 locale.
+Watcher wave-cached-refresh-c-20261007. Non replicare i job; prima verifica
+lo stato live al prossimo RESUME. Termica CPU55.5C,guard ready.
+
+7 ottobre06:02: batchC verificato100/100:1950 source rows,5559 quality,94
+index;34 opportunità first_seen nuove,60 record preesistenti reindicizzati.
+1620s wall; campioni115,maxCPU79.625C,zero pause. BatchD mirato a16 enti
+research/specialist/istituti/fondazioni,33 fonti: schedule4509–4524, stima320s;
+all16 ancora scheduled al controllo06:01. Wake aggregato attivo. Non duplicare.
