@@ -190,3 +190,10 @@ index;34 opportunità first_seen nuove,60 record preesistenti reindicizzati.
 1620s wall; campioni115,maxCPU79.625C,zero pause. BatchD mirato a16 enti
 research/specialist/istituti/fondazioni,33 fonti: schedule4509–4524, stima320s;
 all16 ancora scheduled al controllo06:01. Wake aggregato attivo. Non duplicare.
+
+7 ottobre06:22: wave research D 15/16 done, schedule4516/run4663 fallita
+per timeout browser60s su orgchm.bas.bg.104scrape,125quality,10index,zero
+first_seen nuovi; max CPU72C,zero pause. Batch E 55 schedule4525–4579
+accodate, stima18m20s, non ancora avviate al controllo; watcher wave
+broad-refresh-20261007. Coda ferma dopo E in attesa di misurare resa.
+Governor telemetry ERROR/reconnecting; verificare prima di ogni ulteriore coda.
