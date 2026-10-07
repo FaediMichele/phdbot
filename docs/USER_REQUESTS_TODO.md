@@ -1,6 +1,6 @@
 # Richieste utente e avanzamento
 
-Aggiornato 7 ottobre 2026, 06:22. Aggiornare a ogni unità conclusa, distinguendo
+Aggiornato 7 ottobre 2026, 06:39. Aggiornare a ogni unità conclusa, distinguendo
 implementazione, validazione sul campo e proposte. La ricerca di soluzioni non
 completa una richiesta di implementazione. Non fermare il lavoro indipendente
 sulle fonti sane a causa di pochi recovery problematici.
@@ -15,6 +15,12 @@ sulle fonti sane a causa di pochi recovery problematici.
   Concluso20/20,230 upsert,330 quality,28 index in400s; incremento netto
   ancora da misurare. Secondo batch100 istituzioni/219 fonti preparato,
   stima2200s basata sul primo; ricevute var/refresh-20261006-b/.
+  Batch E (7 ottobre):55 istituzioni/109 fonti,55/55 DONE;509 scrape upserts,
+  514 quality,11 index. Finestra DB:11 indicizzate,5 nuove (first_seen),6 già
+  note;534.8s di stage e769.2s wall vs1100s stimati. 50 campioni termici,
+  max76.625C,0 pause; non è monitoraggio continuo. Il pool noto dei55 candidati
+  non ambigui è stato consumato; nessun successore accodato per evitare refresh
+  ripetuti. Coda live vuota. Non equivale a completamento della copertura catalogo.
 - [ ] Espansione dinamica centri di ricerca, istituti e fondazioni; esplorare
   jobs/careers e ATS esterni. Non considerare finita l'attivazione del catalogo.
 - [ ] Riparare per cluster evidence/screening/routing: audit 5 ottobre 31.448
