@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "authorization": "html-canary-20261012",
+  "expires_at": "2026-10-13T08:00:00+00:00",
+  "pages": [
+    {
+      "id": "fbk",
+      "url": "https://jobs.fbk.eu/",
+      "schema": {
+        "name": "HTML canary title/link projection: fbk",
+        "baseSelector": "table.GRID tr[class^='GRID_DAT_ROW']",
+        "fields": [
+          {
+            "name": "title",
+            "type": "text",
+            "selector": "td[data-title='Title'] a"
+          },
+          {
+            "name": "url",
+            "type": "attribute",
+            "selector": "td[data-title='Title'] a",
+            "attribute": "href"
+          }
+        ],
+        "baseFields": []
+      },
+      "schema_sha256": "bb90ec834c285cd27ea81bd20559addb8667ef3007f61b0a6b31ca7192702d4c",
+      "original_schema_sha256": "68e8db1d1f3a275f981ef39322b230e116751b0c17f1c06ccad9954789247f9a",
+      "policy_url": "https://www.fbk.eu/en/privacy-cookies-policy/"
+    },
+    {
+      "id": "umantis",
+      "url": "https://recruitingapp-5034.de.umantis.com/Jobs/2?lang=eng",
+      "schema": {
+        "name": "HTML canary title/link projection: umantis",
+        "baseSelector": "tr.table-as-list__contentrow1",
+        "fields": [
+          {
+            "name": "title",
+            "type": "text",
+            "selector": "h3.table-as-list__subtitle"
+          },
+          {
+            "name": "url",
+            "type": "attribute",
+            "selector": "ul.table-cell-content > li:nth-of-type(7) a.HSTableLink",
+            "attribute": "href"
+          }
+        ],
+        "baseFields": []
+      },
+      "schema_sha256": "20bcaf438c4b8d08617c920d695faae46d1bf39a6a10dd634d86904ddde6626d",
+      "original_schema_sha256": "a228b31543f34eeff510ea758f2795fdf58fe5dffa3ab2b21202e8f4328d52ec",
+      "policy_url": "https://recruitingapp-5034.de.umantis.com/robots.txt"
+    },
+    {
+      "id": "ait",
+      "url": "https://jobs.ait.ac.at/Jobs",
+      "schema": {
+        "name": "HTML canary title/link projection: ait",
+        "baseSelector": "#jobs-list tbody tr",
+        "fields": [
+          {
+            "name": "title",
+            "type": "text",
+            "selector": "td .job-title a"
+          },
+          {
+            "name": "url",
+            "type": "attribute",
+            "selector": "td .job-title a",
+            "attribute": "href"
+          }
+        ],
+        "baseFields": []
+      },
+      "schema_sha256": "4c8ba691ae27a0780af0b6318a5f61db61b3b47f45c7294a2ea0b60668d801ec",
+      "original_schema_sha256": "b6bc50704ae7bb2e9ee18ac427974299dee4d99d9bcf200b8e4ea6c7ea1bf5e9",
+      "policy_url": "https://www.ait.ac.at/en/disclaimer-data-protection"
+    }
+  ]
+}

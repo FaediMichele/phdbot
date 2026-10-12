@@ -2,8 +2,9 @@
 
 A portable deterministic executor for **explicitly assigned** public HTML pages.
 It has no PHDBOT database connection, model inference, scheduler, deployment or
-canonical publication capability. The CI experiment uses only synthetic HTML;
-successful CI is not evidence of production throughput or live-site compatibility.
+canonical publication capability. CI uses synthetic HTML; one explicitly approved,
+expiring canary also checks three known public HTML pages. A small canary establishes
+compatibility and limits; it cannot establish general production throughput.
 
 ## Install and run
 
@@ -29,7 +30,7 @@ credentials, cookies, browser rendering or discovered-link traversal. Non-200,
 compressed or non-HTML responses are errors. Requests are serial with a one-second
 gap in network mode. The operator must approve public URLs, schemas and applicable
 site access policy; a hash or allowlist does not establish that authorization.
-The initial workflow never enables network fetching.
+Network fetching is enabled only by the separately approved canary invocation below.
 
 ## Task and result contract
 
@@ -84,6 +85,43 @@ paths; do not share a writable spool with untrusted users.
 
 ## CI and artifacts
 
+### Controlled HTML canary (12 October 2026)
+
+`html-canary.json` fixes FBK, the known Umantis board and AIT, with a deadline of
+13 October 2026, 08:00 UTC. Title/link selectors are explicit projections of the
+recorded approved schemas; date transformations and other fields are outside this
+canary. Full schemas and their hashes remain in the earlier frozen manifest.
+ETH was rejected for this remote experiment because its copyright notice restricts
+storage on other servers. Reviewed conditions: FBK privacy policy, AIT disclaimer
+and the sites' robots directives. Robots permission is not a republication licence.
+
+The tested invocation, requiring fresh authorization for any later experiment, is:
+
+```sh
+PYTHONPATH=src timeout 120s python tools/ddw/html_canary.py tools/ddw/html-canary.json /tmp/canary-new --allow-network
+```
+
+Each node makes at most three robots requests (64 KB/10 s each), then one request
+per assigned page (1 MB/10 s each, serial, one-second gaps; worker total 60 s).
+Robots denial/error fails closed. No redirects, retries, rendering, traversal,
+authentication or PDF operations. The public workflow enables this step only on a
+push explicitly marked `[html-canary-20261012]`, within the manifest's expiry;
+ordinary pushes/manual dispatch do not repeat network acquisition. No cron.
+
+Raw HTML, extracted titles and compacted inputs stay in ephemeral temporary storage
+and are removed. Only counts, hashes, timings, timestamps and public same-host
+detail URLs without query/login/application paths are retained. A URL is a candidate
+for later evidence collection, not a verified open PhD opportunity. Link targets
+are not fetched. The summary records partial failures rather than claiming complete
+coverage; a CI success may therefore accompany a partial worker receipt.
+
+For successful pages, complete Crawl4AI extraction and the existing preprocessor
+operate on exactly the same response bytes as DDW. Compaction is a diagnostic:
+known approved schemas do not require another model call. Local/hosted acquisition
+uses the same bounded HTTP transport and assignments, but happens at different
+times; compare response/item hashes before treating the content as identical.
+This does not benchmark production browser rendering, DB or index stages.
+
 ### Paired schema experiment
 
 The optional schema operation uses Crawl4AI 0.9.2's complete CSS validator and
@@ -107,6 +145,11 @@ Use a fresh directory for each benchmark. The first command's finalized receipt
 can be replayed without revalidation. Input identity and implementation version
 must match. This bounded schema operation is a development harness, not a general
 remote service: no production import, HTTP, database, rendering or model calls.
+This experiment is closed after finding no net advantage over the current baseline.
+Frozen reference functions remain historical benchmark evidence: production must
+not import them, and they are excluded from the seven-file portable worker archive.
+The active worker imports the original production `schema_quality` implementation.
+There is no requirement to keep the archived baseline synchronised with production.
 The benchmark imposes a 90-second subprocess timeout and compares serial execution
 with at most two processes. It does not claim cross-host leases or general recovery.
 
