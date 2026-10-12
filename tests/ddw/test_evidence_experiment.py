@@ -7,6 +7,7 @@ import json
 import sys
 import tempfile
 import unittest
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
@@ -56,11 +57,27 @@ class EvidenceDeliveryTests(unittest.TestCase):
 
     def test_policy_change_prevents_any_html_request(self):
         manifest = json.loads((ROOT / "tools/ddw/evidence-task.json").read_bytes())
+        with patch.object(experiment, "policy", return_value={"allowed": True, "sha256": "changed"}):
+            _, blocked = experiment.check_policies(manifest)
+        self.assertEqual(blocked, frozenset(manifest["task"]["allowed_hosts"]))
+        manifest["task"]["expires_at"] = (datetime.now(UTC) + timedelta(hours=1)).isoformat()
         with tempfile.TemporaryDirectory() as directory, \
-                patch.object(experiment, "policy", return_value={"allowed": True, "sha256": "changed"}), \
-                patch.object(experiment.worker, "run", side_effect=AssertionError("HTML request")), \
-                self.assertRaisesRegex(ValueError, "policy"):
-            experiment.execute(manifest, self.public, Path(directory) / "result")
+                patch.object(experiment.worker, "run_page", side_effect=AssertionError("HTML request")), \
+                patch.object(experiment.worker.time, "sleep"):
+            _, receipt = experiment.worker.run(manifest["task"], Path(directory), network=True, blocked_hosts=blocked)
+        self.assertEqual(receipt["state"], "partial")
+        self.assertTrue(all(p["error_type"] == "AccessPolicyBlocked" for p in receipt["pages"]))
+
+    def test_one_blocked_host_does_not_stall_other_assigned_host(self):
+        task = json.loads((ROOT / "tools/ddw/evidence-task.json").read_bytes())["task"]
+        task["expires_at"] = (datetime.now(UTC) + timedelta(hours=1)).isoformat()
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(experiment.worker, "run_page", return_value={"state": "error", "error_type": "AllowedProbe"}) as page, \
+                patch.object(experiment.worker.time, "sleep"):
+            _, receipt = experiment.worker.run(task, Path(directory), network=True,
+                                               blocked_hosts=frozenset({"jobs.nottingham.ac.uk"}))
+        self.assertEqual(page.call_count, 3)
+        self.assertEqual(sum(p["error_type"] == "AccessPolicyBlocked" for p in receipt["pages"]), 2)
 
     def test_manifest_rejects_recipient_and_task_substitution(self):
         original = json.loads((ROOT / "tools/ddw/evidence-task.json").read_bytes())

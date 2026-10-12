@@ -258,7 +258,8 @@ def verify(directory: Path, expected_work_key: str) -> dict[str, Any]:
     return cast(dict[str, Any], receipt)
 
 
-def run(task: dict[str, Any], spool: Path, attempt: int = 1, network: bool = False) -> tuple[Path, dict[str, Any]]:
+def run(task: dict[str, Any], spool: Path, attempt: int = 1, network: bool = False,
+        *, blocked_hosts: frozenset[str] = frozenset()) -> tuple[Path, dict[str, Any]]:
     validate(task)
     root = spool / digest(encoded(task))
     root.mkdir(parents=True, exist_ok=True)
@@ -268,12 +269,13 @@ def run(task: dict[str, Any], spool: Path, attempt: int = 1, network: bool = Fal
     except FileExistsError as exc:
         raise ValueError("work_already_claimed_inspect_before_recovery") from exc
     try:
-        return _run_claimed(task, spool, attempt, network)
+        return _run_claimed(task, spool, attempt, network, blocked_hosts)
     finally:
         claim.rmdir()
 
 
-def _run_claimed(task: dict[str, Any], spool: Path, attempt: int, network: bool) -> tuple[Path, dict[str, Any]]:
+def _run_claimed(task: dict[str, Any], spool: Path, attempt: int, network: bool,
+                 blocked_hosts: frozenset[str]) -> tuple[Path, dict[str, Any]]:
     validate(task)
     if attempt not in (1, 2, 3):
         raise ValueError("attempt_budget")
@@ -308,7 +310,10 @@ def _run_claimed(task: dict[str, Any], spool: Path, attempt: int, network: bool)
                 break
             path = directory / f"page-{i}.json"
             page_started = time.monotonic()
-            result = run_page(directory / "task.json", i, path, network, timeout)
+            if network and "html" not in _page and urlsplit(_page["url"]).hostname in blocked_hosts:
+                result = {"state": "error", "error_type": "AccessPolicyBlocked"}
+            else:
+                result = run_page(directory / "task.json", i, path, network, timeout)
             entry = {"index": i, "state": result["state"],
                      "elapsed_seconds": round(time.monotonic() - page_started, 6)}
             if result["state"] == "ok":

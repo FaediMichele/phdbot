@@ -76,22 +76,30 @@ def unseal(envelope: dict[str, Any], private_pem: bytes, expected: dict[str, Any
     return cast(dict[str, Any], json.loads(raw))
 
 
-def execute(manifest: dict[str, Any], public_pem: bytes, output: Path) -> dict[str, Any]:
-    output.mkdir(parents=True, exist_ok=False)
-    started = time.perf_counter()
+def check_policies(manifest: dict[str, Any]) -> tuple[list[dict[str, Any]], frozenset[str]]:
     task = manifest["task"]
-    policies = []
+    policies, blocked = [], set()
     # One robots read/host; every URL was prechecked against these exact bytes.
     # Changed policy fails closed instead of relying on a stale authorisation.
     for host, expected in manifest["robots_sha256"].items():
         url = next(page["url"] for page in task["pages"] if urlsplit(page["url"]).hostname == host)
         observed = policy(url)
-        if not observed["allowed"] or observed.get("sha256") != expected:
-            raise ValueError("policy_changed_or_denied")
+        accepted = observed["allowed"] and observed.get("sha256") == expected
+        observed["preflight_accepted"] = accepted
+        if not accepted:
+            blocked.add(host)
         policies.append(observed)
+    return policies, frozenset(blocked)
+
+
+def execute(manifest: dict[str, Any], public_pem: bytes, output: Path) -> dict[str, Any]:
+    output.mkdir(parents=True, exist_ok=False)
+    started = time.perf_counter()
+    task = manifest["task"]
+    policies, blocked = check_policies(manifest)
     with tempfile.TemporaryDirectory(prefix="phdbot-private-evidence-") as temporary:
         acquisition_started = time.perf_counter()
-        directory, receipt = worker.run(task, Path(temporary), network=True)
+        directory, receipt = worker.run(task, Path(temporary), network=True, blocked_hosts=blocked)
         acquisition_seconds = time.perf_counter() - acquisition_started
         verification_started = time.perf_counter()
         worker.verify(directory, manifest["task_sha256"])

@@ -111,7 +111,9 @@ PYTHONPATH=src timeout 120s python tools/ddw/evidence_experiment.py tools/ddw/ev
 
 This is the recorded experimental invocation, not permission to repeat a completed
 assignment. One robots request per host must match the exact bytes against which
-all assigned URLs were approved; policy changes fail closed. Maximum five HTML
+all assigned URLs were approved; policy changes/errors fail closed for that host,
+with redacted HTTP status/hash diagnostics retained. Other assigned hosts can
+continue and every skipped page remains an explicit partial result. Maximum five HTML
 requests, 1 MB/10 s each, no redirects/retries/rendering; worker 60 s, wrapper 120 s.
 The task expires 13 October, 15:00 UTC. The hosted network step requires commit
 marker `[evidence-canary-20261012]`; ordinary pushes and manual dispatch do not

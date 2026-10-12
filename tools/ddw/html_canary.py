@@ -58,14 +58,15 @@ def policy(url: str) -> dict[str, Any]:
             if response.status != 200 or len(raw) > 64_000:
                 raise ValueError("robots_limit_or_status")
         parser = RobotFileParser()
-        parser.parse(raw.decode("utf-8", errors="replace").splitlines())
+        parser.parse(raw.decode("utf-8-sig", errors="replace").splitlines())
         allowed = parser.can_fetch(AGENT, url)
         return {"robots_url": robots_url, "observed_at": worker.now(), "allowed": allowed,
                 "sha256": worker.digest(raw), "bytes": len(raw),
                 "seconds": time.perf_counter() - started}
     except (HTTPError, OSError, ValueError) as exc:
         return {"robots_url": robots_url, "observed_at": worker.now(), "allowed": False,
-                "error_type": type(exc).__name__, "seconds": time.perf_counter() - started}
+                "error_type": type(exc).__name__, "http_status": exc.code if isinstance(exc, HTTPError) else None,
+                "seconds": time.perf_counter() - started}
 
 
 def detail_routes(url: str, items: list[dict[str, str]]) -> list[str]:
