@@ -85,6 +85,50 @@ paths; do not share a writable spool with untrusted users.
 
 ## CI and artifacts
 
+### Missing-evidence experiment (12 October 2026)
+
+One explicit assignment (`evidence-task.json`) covers five known static detail
+URLs whose canonical records have no detail text or acquisition timestamp. The
+selection and previous evidence remain local, outside this public branch. No
+additional local fetch is used for comparison: the coordinator compares the exact
+delivered bytes with its existing cleanup/review/index helpers in memory.
+
+The existing worker acquires HTML and a page title; it does not decide eligibility.
+Page receipts now include elapsed time (network, parsing and child startup).
+The experiment encrypts the bounded task/receipt/body bundle with AES-256-GCM and
+wraps its one-use key using RSA-3072 OAEP/SHA-256. Only the recipient's public key
+is committed. Its private key stays on the Legion; no production credentials or
+permanent storage service is introduced. Context binds assignment, recipient and
+source commit. Encryption protects confidentiality, not worker authenticity;
+the trusted GitHub execution and exact source/artifact checks establish provenance
+for this experiment. Plaintext exists temporarily only in the runner's private
+spool and the coordinator's private verification directory.
+
+```sh
+python -m pip install -r tools/ddw/evidence-requirements.txt
+PYTHONPATH=src timeout 120s python tools/ddw/evidence_experiment.py tools/ddw/evidence-task.json tools/ddw/evidence-recipient.pem /tmp/evidence-new --allow-network
+```
+
+This is the recorded experimental invocation, not permission to repeat a completed
+assignment. One robots request per host must match the exact bytes against which
+all assigned URLs were approved; policy changes fail closed. Maximum five HTML
+requests, 1 MB/10 s each, no redirects/retries/rendering; worker 60 s, wrapper 120 s.
+The task expires 13 October, 15:00 UTC. The hosted network step requires commit
+marker `[evidence-canary-20261012]`; ordinary pushes and manual dispatch do not
+repeat it. Artifacts expire after one day and include ciphertext and redacted
+measurements, never real HTML/text in plaintext. Preserve the private key and the
+local encrypted copy until the analysis and necessary recovery are complete.
+
+`tools/ddw/evidence_compare.py` is a coordinator-side laboratory helper in the
+local PHDBOT checkout, not part of the portable worker or hosted branch. It
+decrypts, validates the original receipt and uses current production cleanup,
+metadata and deterministic gates directly, without database/network access or
+inference. It records insufficient→sufficient and review/provisional gate changes
+as simulations. No canonical state changes or actual indexing occur. A simulated
+24-hour admission TTL is a proposal; current evidence code does not enforce that
+age limit. Results must distinguish acquired text, useful documents, review-ready
+candidates and actually searchable opportunities.
+
 ### Controlled HTML canary (12 October 2026)
 
 `html-canary.json` fixes FBK, the known Umantis board and AIT, with a deadline of

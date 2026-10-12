@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "operation": "private-evidence-canary",
+  "task": {
+    "version": 1,
+    "cycle": "evidence-canary-20261012",
+    "expires_at": "2026-10-13T15:00:00+00:00",
+    "timeout_seconds": 10,
+    "allowed_hosts": [
+      "jobs.nottingham.ac.uk",
+      "www.southampton.ac.uk"
+    ],
+    "pages": [
+      {
+        "url": "https://www.southampton.ac.uk/study/postgraduate-research/projects/enhancing-uav-manoeuvres-control-using-distributed-sensor",
+        "schema": {
+          "name": "Explicit detail HTML acquisition; title only",
+          "baseSelector": "html",
+          "fields": [
+            {
+              "name": "title",
+              "selector": "title",
+              "type": "text"
+            }
+          ]
+        },
+        "schema_sha256": "30c7a9431bbcf29f7179207174ca0e0cc5b9b40afe186e0a682e162be986fe3b"
+      },
+      {
+        "url": "https://www.southampton.ac.uk/study/postgraduate-research/projects/exploring-the-mechanisms-of-microplastics-incorporation-their",
+        "schema": {
+          "name": "Explicit detail HTML acquisition; title only",
+          "baseSelector": "html",
+          "fields": [
+            {
+              "name": "title",
+              "selector": "title",
+              "type": "text"
+            }
+          ]
+        },
+        "schema_sha256": "30c7a9431bbcf29f7179207174ca0e0cc5b9b40afe186e0a682e162be986fe3b"
+      },
+      {
+        "url": "https://www.southampton.ac.uk/study/postgraduate-research/projects/green-sustainable-internet-of-things",
+        "schema": {
+          "name": "Explicit detail HTML acquisition; title only",
+          "baseSelector": "html",
+          "fields": [
+            {
+              "name": "title",
+              "selector": "title",
+              "type": "text"
+            }
+          ]
+        },
+        "schema_sha256": "30c7a9431bbcf29f7179207174ca0e0cc5b9b40afe186e0a682e162be986fe3b"
+      },
+      {
+        "url": "https://jobs.nottingham.ac.uk/vacancy.aspx?ref=ENG2321926",
+        "schema": {
+          "name": "Explicit detail HTML acquisition; title only",
+          "baseSelector": "html",
+          "fields": [
+            {
+              "name": "title",
+              "selector": "title",
+              "type": "text"
+            }
+          ]
+        },
+        "schema_sha256": "30c7a9431bbcf29f7179207174ca0e0cc5b9b40afe186e0a682e162be986fe3b"
+      },
+      {
+        "url": "https://jobs.nottingham.ac.uk/vacancy.aspx?ref=MED2022326",
+        "schema": {
+          "name": "Explicit detail HTML acquisition; title only",
+          "baseSelector": "html",
+          "fields": [
+            {
+              "name": "title",
+              "selector": "title",
+              "type": "text"
+            }
+          ]
+        },
+        "schema_sha256": "30c7a9431bbcf29f7179207174ca0e0cc5b9b40afe186e0a682e162be986fe3b"
+      }
+    ]
+  },
+  "task_sha256": "686e94c6c388b056466da2350be8edc0aecbaf0a6f45339365622e4b87566b0b",
+  "recipient_sha256": "ef1f7ae25553d7d863ba5646b8ec11c3c1198e83021754ed0d53f07fc04c5af8",
+  "robots_sha256": {
+    "jobs.nottingham.ac.uk": "86e706d1576aff049f3a425fb1764dbf5152bf2562cc783a3495ae01a47002eb",
+    "www.southampton.ac.uk": "f19a9e6f1f51cb3b2f3ae42f7e5a715df5e9c939a7f714867a8a45e7df53eb79"
+  }
+}

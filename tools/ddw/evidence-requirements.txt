@@ -1,0 +1,3 @@
+# Ephemeral encrypted experiment transport; not a production credential system.
+-r schema-requirements.txt
+cryptography==49.0.0

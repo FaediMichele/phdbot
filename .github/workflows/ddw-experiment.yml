@@ -30,22 +30,26 @@ jobs:
         with:
           python-version: '3.13'
       - name: Install only worker dependencies
-        run: python -m pip install -r tools/ddw/schema-requirements.txt
+        run: python -m pip install -r tools/ddw/evidence-requirements.txt
       - name: Isolated contract and interruption tests
         run: |
           python -m unittest discover -s tests/ddw -p test_worker.py -v
           python -m unittest discover -s tests/ddw -p test_html_canary.py -v
+          python -m unittest discover -s tests/ddw -p test_evidence_experiment.py -v
       - name: Execute fixture assignment and build portable artifact
         run: python tools/ddw/experiment.py ddw-artifacts
       - name: One explicitly authorized public HTML canary
         if: github.event_name == 'push' && contains(github.event.head_commit.message, '[html-canary-20261012]')
         run: timeout 120s python tools/ddw/html_canary.py tools/ddw/html-canary.json ddw-artifacts/html --allow-network
+      - name: One missing-evidence assignment with encrypted delivery
+        if: github.event_name == 'push' && contains(github.event.head_commit.message, '[evidence-canary-20261012]')
+        run: timeout 120s python tools/ddw/evidence_experiment.py tools/ddw/evidence-task.json tools/ddw/evidence-recipient.pem ddw-artifacts/evidence --allow-network
       - name: Retain bounded public experiment evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ddw-experiment-${{ github.sha }}
           path: ddw-artifacts/
-          retention-days: 3
+          retention-days: 1
           if-no-files-found: error
           include-hidden-files: false

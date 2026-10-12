@@ -307,8 +307,10 @@ def _run_claimed(task: dict[str, Any], spool: Path, attempt: int, network: bool)
                 receipt["state"] = "expired"
                 break
             path = directory / f"page-{i}.json"
+            page_started = time.monotonic()
             result = run_page(directory / "task.json", i, path, network, timeout)
-            entry = {"index": i, "state": result["state"]}
+            entry = {"index": i, "state": result["state"],
+                     "elapsed_seconds": round(time.monotonic() - page_started, 6)}
             if result["state"] == "ok":
                 entry["sha256"] = digest(path.read_bytes())
             else:
