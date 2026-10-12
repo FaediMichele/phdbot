@@ -1,0 +1,44 @@
+name: DDW isolated experiment
+on:
+  push:
+    branches: [experiment/ddw-v1]
+    paths:
+      - 'src/phd_searcher/ddw/**'
+      - 'src/phd_searcher/pipeline/schema_quality.py'
+      - 'tools/ddw/**'
+      - 'tests/ddw/**'
+      - '.github/workflows/ddw-experiment.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ddw-experiment-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  isolated-fixtures:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      PYTHONPATH: src
+      DDW_SOURCE_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Install only worker dependencies
+        run: python -m pip install -r tools/ddw/requirements.txt
+      - name: Isolated contract and interruption tests
+        run: python -m unittest discover -s tests/ddw -v
+      - name: Execute fixture assignment and build portable artifact
+        run: python tools/ddw/experiment.py ddw-artifacts
+      - name: Retain bounded public experiment evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ddw-experiment-${{ github.sha }}
+          path: ddw-artifacts/
+          retention-days: 3
+          if-no-files-found: error
+          include-hidden-files: false
