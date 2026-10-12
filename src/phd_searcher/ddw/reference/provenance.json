@@ -1,0 +1,36 @@
+{
+  "baseline_commit": "7c8b89c",
+  "crawl4ai": "0.9.2",
+  "sources": {
+    "schema_quality": {
+      "source_path": "src/phd_searcher/pipeline/schema_quality.py",
+      "sha256": "d0bb25ce59c6da47a1e2cacc42a846378d1689634fc3cec1813b693fc0a9db33",
+      "mode": "exact-file"
+    },
+    "source_validation": {
+      "source_path": "src/phd_searcher/pipeline/source_validation.py",
+      "sha256": "28e2c13f2c2cce83b7ffdef0cebda686d43cda780135446774e980ae2aa1baa1",
+      "mode": "exact-file"
+    },
+    "funding_sources": {
+      "source_path": "src/phd_searcher/pipeline/funding_sources.py",
+      "sha256": "cbe2ff658d5cbee16de690b8f8335b675159658a2eadd6e47a4807b2facecac6",
+      "mode": "exact-file"
+    },
+    "reuse": {
+      "source_path": "src/phd_searcher/pipeline/schema_gen.py",
+      "sha256": "d259cabafc74a6e23c07c08e44642f72d1f73650887191d182ff6f9dcd7ae5c4",
+      "functions": {
+        "_schema_cache_key": "cfcfed23a884874393616283bf40fa0e38b3a17601a79e1d3a7843f7c06f0be0",
+        "_validated_reusable_schema": "7af564a73414584e3fdd6a198c8256cdff768b03faa7f6e7f2c75ec0fe9c69b4",
+        "_remember_schema": "efced040e86aab173f0d5dc21cf30fa2b96fd68464b69f72d682bfc094028c7d"
+      },
+      "mode": "exact-functions"
+    },
+    "bite_marker": {
+      "source_path": "src/phd_searcher/pipeline/bite.py",
+      "sha256": "b5d5829f2c755d5015f8d1b1638c1c633906be31ca9f1f30ae18a966d1b295b3",
+      "mode": "exact-marker-function-and-constants"
+    }
+  }
+}

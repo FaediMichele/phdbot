@@ -84,6 +84,53 @@ paths; do not share a writable spool with untrusted users.
 
 ## CI and artifacts
 
+### Paired schema experiment
+
+The optional schema operation uses Crawl4AI 0.9.2's complete CSS validator and
+preprocessor, plus frozen pure PHDBOT preflight/adapter/reuse functions. Provenance
+is in `src/phd_searcher/ddw/reference/provenance.json`; the actual runtime helpers
+were checked locally against these copies. Original production modules are unchanged.
+It accepts at most 20 hash-checked snapshots and same-host/kind cache candidates.
+The benchmark cohort contains 16 sanitized public snapshots, including historical
+static/rendered pairs and three bounded public captures. It is a selected diagnostic
+cohort, not a sample estimating prevalence across the catalogue. The three new
+captures are ETH, FBK and ISTI; the remaining material is historical. Sanitization
+preserved all measured preflight decisions and extracted items.
+
+```sh
+python -m pip install -r tools/ddw/schema-requirements.txt
+PYTHONPATH=src python -m phd_searcher.ddw.schema_probe tests/ddw/snapshots/manifest.json result.json
+PYTHONPATH=src python tools/ddw/schema_experiment.py tests/ddw/snapshots/manifest.json /tmp/schema-study-new
+```
+
+Use a fresh directory for each benchmark. The first command's finalized receipt
+can be replayed without revalidation. Input identity and implementation version
+must match. This bounded schema operation is a development harness, not a general
+remote service: no production import, HTTP, database, rendering or model calls.
+The benchmark imposes a 90-second subprocess timeout and compares serial execution
+with at most two processes. It does not claim cross-host leases or general recovery.
+
+Baseline includes existing preflight, BITE/funding routes and the current same-host
+schema pool. Hosted comparison uses exact frozen source; `--live-baseline` locally
+uses the actual current PHDBOT reuse helper. Prepared model input uses the production
+compaction parameters and is produced only for unresolved generation candidates.
+All fields and exact prepared input are compared, not just the acceptance boolean.
+Ancillary LiteLLM pricing-map downloads are disabled in the experimental process;
+no production environment is changed. Initial dependency installation needs network.
+
+`audit.json` separately fixes public-DOM/manual title-link expectations. It is not
+a PhD eligibility/opening audit. BITE postings are not fetched; generation candidates
+remain conditional on rendering, ownership and due-state. The harness does not
+represent full crawl/scrape/normalization/quality/index execution. A structurally
+accepted schema can still return navigation or an application-login link, and
+existing downstream repairs are outside that raw-extraction comparison.
+
+The summary records baseline median, child startup/end-to-end, compute, hash/JSON
+verification and compressed payload sizes. Transfer bytes are measured; they are
+not network latency, model savings or full-pipeline acceleration. Additional reuse
+and avoided-generation counters are computed against the already optimized baseline.
+No infrastructure expansion is justified merely by moving identical cheap work.
+
 ```sh
 PYTHONPATH=src python -m unittest discover -s tests/ddw -v
 PYTHONPATH=src python tools/ddw/experiment.py /tmp/ddw-experiment

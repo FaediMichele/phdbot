@@ -1,0 +1,1082 @@
+{
+  "version": 1,
+  "operation": "schema-probe",
+  "baseline_commit": "7c8b89c",
+  "cache_observed_on": "2026-10-12",
+  "cases": [
+    {
+      "id": "eth",
+      "url": "https://jobs.ethz.ch/site/index",
+      "kind": "university",
+      "family": "static-cards",
+      "snapshot": "eth.html",
+      "snapshot_sha256": "a93582bbd3d2a4c770290400f537197a1d074b8e4c746ac99b5be60a2e23d73b",
+      "original_sha256": "9d523b8e64b9b88505ffb725c84ef08dd435c4cdeee0797aa6b2706eff15431a",
+      "original_bytes": 151854,
+      "snapshot_bytes": 110022,
+      "origin": "controlled-public-fetch-2026-10-12",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [
+        {
+          "source_url": "https://jobs.ethz.ch/site/index",
+          "kind": "university",
+          "schema": {
+            "name": "ETH Zurich official jobs",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "selector": ".job-ad__item__title"
+              },
+              {
+                "name": "url",
+                "type": "attribute",
+                "selector": "a.job-ad__item__link",
+                "attribute": "href"
+              },
+              {
+                "name": "description",
+                "type": "text",
+                "selector": ".job-ad__item__company"
+              },
+              {
+                "name": "area",
+                "type": "text",
+                "selector": ".job-ad__item__company"
+              },
+              {
+                "name": "duration",
+                "type": "text",
+                "selector": ".job-ad__item__details"
+              },
+              {
+                "name": "published",
+                "type": "text",
+                "selector": ".job-ad__item__company"
+              },
+              {
+                "name": "research_group",
+                "type": "text",
+                "selector": ".job-ad__item__company"
+              }
+            ],
+            "baseFields": [],
+            "baseSelector": ".job-ad__item__wrapper"
+          },
+          "schema_sha256": "f61a49f754efc2a57b25674285de6ee03059d7f6edba5427b91d1a19667d0108"
+        }
+      ],
+      "recorded_schema_status": "ok"
+    },
+    {
+      "id": "fbk",
+      "url": "https://jobs.fbk.eu/",
+      "kind": "university",
+      "family": "table",
+      "snapshot": "fbk.html",
+      "snapshot_sha256": "67ca9fec833d9d63fde04c0dc0995078b296fa7240483eac7cc4cb386811494c",
+      "original_sha256": "e8956d379df4bc9d03cda20d8837994c221ef12a08841d165909742246ba2acc",
+      "original_bytes": 74580,
+      "snapshot_bytes": 28821,
+      "origin": "controlled-public-fetch-2026-10-12",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [
+        {
+          "source_url": "https://jobs.fbk.eu/",
+          "kind": "university",
+          "schema": {
+            "name": "Fondazione Bruno Kessler official jobs",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "selector": "td[data-title='Title'] a"
+              },
+              {
+                "name": "url",
+                "type": "attribute",
+                "selector": "td[data-title='Title'] a",
+                "attribute": "href"
+              },
+              {
+                "name": "description",
+                "type": "text",
+                "selector": "td[data-title='Recruitment Type']"
+              },
+              {
+                "name": "published",
+                "type": "text",
+                "selector": "td[data-title='Date published']"
+              },
+              {
+                "name": "deadline",
+                "type": "text",
+                "selector": "td[data-title='Deadline']"
+              }
+            ],
+            "baseFields": [],
+            "dateFormats": {
+              "deadline": "%m/%d/%Y",
+              "published": "%m/%d/%Y"
+            },
+            "baseSelector": "table.GRID tr[class^='GRID_DAT_ROW']"
+          },
+          "schema_sha256": "68e8db1d1f3a275f981ef39322b230e116751b0c17f1c06ccad9954789247f9a"
+        }
+      ],
+      "recorded_schema_status": "ok"
+    },
+    {
+      "id": "isti",
+      "url": "https://www.isti.cnr.it/it/comunicazioni/bandi",
+      "kind": "university",
+      "family": "base-anchor",
+      "snapshot": "isti.html",
+      "snapshot_sha256": "35c2d584342752a981cc1995b87bb779b52536c61582932893256797cd54e976",
+      "original_sha256": "f7610a88277c24ec70912a49fc0021090fe53e976d841cd7529c9f61c6e1191b",
+      "original_bytes": 24290,
+      "snapshot_bytes": 19644,
+      "origin": "controlled-public-fetch-2026-10-12",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [],
+      "recorded_schema_status": "stale"
+    },
+    {
+      "id": "ait",
+      "url": "https://jobs.ait.ac.at/Jobs",
+      "kind": "university",
+      "family": "static-shell",
+      "snapshot": "ait.html",
+      "snapshot_sha256": "af5d6932730c237633adffe3f87a51d21a35a7d7d008214614ca5b0e89cc936c",
+      "original_sha256": "10e6c0a8da94fdb5921c5ab67e35fc13c640b0dfb3a27a32d554a882a0a159dc",
+      "original_bytes": 89403,
+      "snapshot_bytes": 35383,
+      "origin": "historical-public-snapshot-September-2026",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [
+        {
+          "source_url": "https://jobs.ait.ac.at/Jobs",
+          "kind": "university",
+          "schema": {
+            "name": "PhD Vacancy List",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "selector": "td .job-title a"
+              },
+              {
+                "name": "area",
+                "type": "text",
+                "selector": "td .job-subtitle"
+              },
+              {
+                "name": "location",
+                "type": "text",
+                "selector": "td.location"
+              },
+              {
+                "name": "url",
+                "type": "attribute",
+                "selector": "td .job-title a",
+                "attribute": "href"
+              }
+            ],
+            "baseFields": [],
+            "baseSelector": "#jobs-list tbody tr"
+          },
+          "schema_sha256": "b6bc50704ae7bb2e9ee18ac427974299dee4d99d9bcf200b8e4ea6c7ea1bf5e9"
+        }
+      ],
+      "recorded_schema_status": "ok"
+    },
+    {
+      "id": "champ-static",
+      "url": "https://www.fchampalimaud.org/open-positions",
+      "kind": "university",
+      "family": "static-shell",
+      "snapshot": "champ-static.html",
+      "snapshot_sha256": "ec79dadaffba41d253a2a0565f3b75b8d32eb8e694399c0321ef2a126e40759c",
+      "original_sha256": "067ff872be67b6be85cb645467d2c124a7efc13e55e997ff5d251181c02be40e",
+      "original_bytes": 67452,
+      "snapshot_bytes": 41408,
+      "origin": "historical-public-snapshot-September-2026",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [
+        {
+          "source_url": "https://www.fchampalimaud.org/open-positions",
+          "kind": "university",
+          "schema": {
+            "name": "Open Positions",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "selector": ".title p"
+              },
+              {
+                "name": "url",
+                "type": "attribute",
+                "selector": "a[href]",
+                "attribute": "href"
+              },
+              {
+                "name": "deadline",
+                "type": "text",
+                "selector": ".deadline p"
+              },
+              {
+                "name": "description",
+                "type": "text",
+                "selector": ".description p"
+              },
+              {
+                "name": "area",
+                "type": "text",
+                "selector": ".category p"
+              },
+              {
+                "name": "language",
+                "type": "text",
+                "selector": ".language p"
+              },
+              {
+                "name": "duration",
+                "type": "text",
+                "selector": ".duration p"
+              },
+              {
+                "name": "compensation",
+                "type": "text",
+                "selector": ".compensation p"
+              },
+              {
+                "name": "published",
+                "type": "text",
+                "selector": ".date p"
+              },
+              {
+                "name": "position_type",
+                "type": "text",
+                "selector": ".position-type p"
+              },
+              {
+                "name": "research_group",
+                "type": "text",
+                "selector": ".research-group p"
+              }
+            ],
+            "baseFields": [],
+            "baseSelector": ".colOfferItem.custom-list-entry",
+            "render_wait_for": ".custom-list-entry-wrapper > * a[href]"
+          },
+          "schema_sha256": "59a13b799350649f4fafd758f780a887b24b69fe68e8e37bb923b1d9c8277e01"
+        }
+      ],
+      "recorded_schema_status": "ok"
+    },
+    {
+      "id": "champ-rendered",
+      "url": "https://www.fchampalimaud.org/open-positions",
+      "kind": "university",
+      "family": "rendered-cards",
+      "snapshot": "champ-rendered.html",
+      "snapshot_sha256": "42cda32a5477096ae58ada81ad2aabc06f74d6067e542294f5eaebd56e6579ff",
+      "original_sha256": "437812ed6378f6c234192cecdd82331c8424a05effad92adf9ea526a1659ef23",
+      "original_bytes": 77516,
+      "snapshot_bytes": 51245,
+      "origin": "historical-public-snapshot-September-2026",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [
+        {
+          "source_url": "https://www.fchampalimaud.org/open-positions",
+          "kind": "university",
+          "schema": {
+            "name": "Open Positions",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "selector": ".title p"
+              },
+              {
+                "name": "url",
+                "type": "attribute",
+                "selector": "a[href]",
+                "attribute": "href"
+              },
+              {
+                "name": "deadline",
+                "type": "text",
+                "selector": ".deadline p"
+              },
+              {
+                "name": "description",
+                "type": "text",
+                "selector": ".description p"
+              },
+              {
+                "name": "area",
+                "type": "text",
+                "selector": ".category p"
+              },
+              {
+                "name": "language",
+                "type": "text",
+                "selector": ".language p"
+              },
+              {
+                "name": "duration",
+                "type": "text",
+                "selector": ".duration p"
+              },
+              {
+                "name": "compensation",
+                "type": "text",
+                "selector": ".compensation p"
+              },
+              {
+                "name": "published",
+                "type": "text",
+                "selector": ".date p"
+              },
+              {
+                "name": "position_type",
+                "type": "text",
+                "selector": ".position-type p"
+              },
+              {
+                "name": "research_group",
+                "type": "text",
+                "selector": ".research-group p"
+              }
+            ],
+            "baseFields": [],
+            "baseSelector": ".colOfferItem.custom-list-entry",
+            "render_wait_for": ".custom-list-entry-wrapper > * a[href]"
+          },
+          "schema_sha256": "59a13b799350649f4fafd758f780a887b24b69fe68e8e37bb923b1d9c8277e01"
+        }
+      ],
+      "recorded_schema_status": "ok"
+    },
+    {
+      "id": "umantis",
+      "url": "https://recruitingapp-5034.de.umantis.com/Jobs/2?lang=eng",
+      "kind": "university",
+      "family": "external-ats",
+      "snapshot": "umantis.html",
+      "snapshot_sha256": "a98a7c992f8d276cf14c351fda43c72c67ec82495daae6c4bc1854d29fdd472e",
+      "original_sha256": "ff23464bb2e09416185e9f48c50dcb070c0ab7e5fde6463473a75cbee3355ee1",
+      "original_bytes": 68565,
+      "snapshot_bytes": 15068,
+      "origin": "historical-public-snapshot-September-2026",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": false,
+      "candidates": [
+        {
+          "source_url": "https://recruitingapp-5034.de.umantis.com/Jobs/2?lang=eng",
+          "kind": "university",
+          "schema": {
+            "name": "PhD Vacancy Items",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "selector": "h3.table-as-list__subtitle"
+              },
+              {
+                "name": "deadline",
+                "type": "text",
+                "selector": "p.table-as-list__subtitle"
+              },
+              {
+                "name": "research_group",
+                "type": "text",
+                "selector": "ul.table-cell-content > li:nth-of-type(3) span.column-value"
+              },
+              {
+                "name": "duration",
+                "type": "text",
+                "selector": "ul.table-cell-content > li:nth-of-type(5) span.column-value"
+              },
+              {
+                "name": "area",
+                "type": "text",
+                "selector": "ul.table-cell-content > li:nth-of-type(6) span.column-value"
+              },
+              {
+                "name": "url",
+                "type": "attribute",
+                "selector": "ul.table-cell-content > li:nth-of-type(7) a.HSTableLink",
+                "attribute": "href"
+              }
+            ],
+            "baseFields": [],
+            "baseSelector": "tr.table-as-list__contentrow1"
+          },
+          "schema_sha256": "a228b31543f34eeff510ea758f2795fdf58fe5dffa3ab2b21202e8f4328d52ec"
+        }
+      ],
+      "recorded_schema_status": "ok"
+    },
+    {
+      "id": "meteo",
+      "url": "https://www.meteo.be/nl/over-het-kmi/werken-bij-het-kmi/actuele-vacatures",
+      "kind": "university",
+      "family": "heading-only",
+      "snapshot": "meteo.html",
+      "snapshot_sha256": "fdeb2ab7e78d66d180a83a368ae083fcf3832f5e005f3ed6f7261659a3e49baa",
+      "original_sha256": "7597f9fa1a623039587bb1d5f0faf2679b0cf8416f030fa531ed801e5d447194",
+      "original_bytes": 40822,
+      "snapshot_bytes": 37246,
+      "origin": "historical-public-snapshot-September-2026",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [],
+      "recorded_schema_status": "deferred"
+    },
+    {
+      "id": "ino-staff",
+      "url": "https://www.ino.cnr.it/?page_id=9664",
+      "kind": "university",
+      "family": "staff-directory",
+      "snapshot": "ino-staff.html",
+      "snapshot_sha256": "8d7649078c71e6cfda6065f9b6d0bf94e15cfa1194f6f10cfa231c1f8b9a121c",
+      "original_sha256": "b401fd23034c2b3984b4674e8fcbfc01ba54b88b24a10e9639eb8f1e78f39e39",
+      "original_bytes": 373868,
+      "snapshot_bytes": 264081,
+      "origin": "historical-public-snapshot-September-2026",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [
+        {
+          "source_url": "https://www.ino.cnr.it/?page_id=3435",
+          "kind": "university",
+          "schema": {
+            "name": "PhD Vacancy Items",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "selector": "h2"
+              },
+              {
+                "name": "vacancies",
+                "type": "list",
+                "fields": [
+                  {
+                    "name": "title",
+                    "type": "text",
+                    "selector": "h3"
+                  },
+                  {
+                    "name": "url",
+                    "type": "attribute",
+                    "selector": "a",
+                    "attribute": "href"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "text",
+                    "selector": ".deadline"
+                  },
+                  {
+                    "name": "description",
+                    "type": "text",
+                    "selector": ".description"
+                  },
+                  {
+                    "name": "area",
+                    "type": "text",
+                    "selector": ".area"
+                  },
+                  {
+                    "name": "language",
+                    "type": "text",
+                    "selector": ".language"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "text",
+                    "selector": ".duration"
+                  },
+                  {
+                    "name": "compensation",
+                    "type": "text",
+                    "selector": ".compensation"
+                  },
+                  {
+                    "name": "published",
+                    "type": "text",
+                    "selector": ".published"
+                  },
+                  {
+                    "name": "position_type",
+                    "type": "text",
+                    "selector": ".position_type"
+                  },
+                  {
+                    "name": "research_group",
+                    "type": "text",
+                    "selector": ".research_group"
+                  }
+                ],
+                "selector": ".vacancy-item"
+              }
+            ],
+            "baseFields": [],
+            "baseSelector": "section.mcb-section"
+          },
+          "schema_sha256": "deed7f531e8bad20ac9c6240880007509d165cae752210bbd6e135e6f7ff8926"
+        }
+      ],
+      "recorded_schema_status": "deferred"
+    },
+    {
+      "id": "ino-jobs",
+      "url": "https://www.ino.cnr.it/?page_id=3435",
+      "kind": "university",
+      "family": "navigation",
+      "snapshot": "ino-jobs.html",
+      "snapshot_sha256": "74ed75d75741a9eedbe96cce6a9ae08169880ebc6a77c637d36cf362bb015d7f",
+      "original_sha256": "7b5c1b36bc3b3ea09cd765b73b57974b59dacc8aafc79a615a8819df5be1fcd4",
+      "original_bytes": 127437,
+      "snapshot_bytes": 26941,
+      "origin": "historical-public-snapshot-September-2026",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [
+        {
+          "source_url": "https://www.ino.cnr.it/?page_id=3435",
+          "kind": "university",
+          "schema": {
+            "name": "PhD Vacancy Items",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "selector": "h2"
+              },
+              {
+                "name": "vacancies",
+                "type": "list",
+                "fields": [
+                  {
+                    "name": "title",
+                    "type": "text",
+                    "selector": "h3"
+                  },
+                  {
+                    "name": "url",
+                    "type": "attribute",
+                    "selector": "a",
+                    "attribute": "href"
+                  },
+                  {
+                    "name": "deadline",
+                    "type": "text",
+                    "selector": ".deadline"
+                  },
+                  {
+                    "name": "description",
+                    "type": "text",
+                    "selector": ".description"
+                  },
+                  {
+                    "name": "area",
+                    "type": "text",
+                    "selector": ".area"
+                  },
+                  {
+                    "name": "language",
+                    "type": "text",
+                    "selector": ".language"
+                  },
+                  {
+                    "name": "duration",
+                    "type": "text",
+                    "selector": ".duration"
+                  },
+                  {
+                    "name": "compensation",
+                    "type": "text",
+                    "selector": ".compensation"
+                  },
+                  {
+                    "name": "published",
+                    "type": "text",
+                    "selector": ".published"
+                  },
+                  {
+                    "name": "position_type",
+                    "type": "text",
+                    "selector": ".position_type"
+                  },
+                  {
+                    "name": "research_group",
+                    "type": "text",
+                    "selector": ".research_group"
+                  }
+                ],
+                "selector": ".vacancy-item"
+              }
+            ],
+            "baseFields": [],
+            "baseSelector": "section.mcb-section"
+          },
+          "schema_sha256": "deed7f531e8bad20ac9c6240880007509d165cae752210bbd6e135e6f7ff8926"
+        }
+      ],
+      "recorded_schema_status": "ok"
+    },
+    {
+      "id": "iow-phd",
+      "url": "https://www.iow.de/career/phd-students.html",
+      "kind": "university",
+      "family": "informational",
+      "snapshot": "iow-phd.html",
+      "snapshot_sha256": "86a6fe22d3eac6c66da8adc3d3682bfda3014b83568ec18a8b4e5101741c2b05",
+      "original_sha256": "67c51f910bf55eca5fd7d7485031ad10d21d535d95d5f7fceb449f96208cab72",
+      "original_bytes": 18148,
+      "snapshot_bytes": 11041,
+      "origin": "historical-public-snapshot-September-2026",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [
+        {
+          "source_url": "https://www.iow.de/career/phd-students.html",
+          "kind": "university",
+          "schema": {
+            "name": "PhD Vacancy Items",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "selector": "h1.ce_headline"
+              },
+              {
+                "name": "url",
+                "type": "attribute",
+                "selector": "div.ce_text.block a[href]",
+                "attribute": "href"
+              },
+              {
+                "name": "deadline",
+                "type": "text",
+                "selector": "div.ce_text.block .nonexistent"
+              },
+              {
+                "name": "description",
+                "type": "text",
+                "selector": "div.ce_text.block > p:first-of-type"
+              },
+              {
+                "name": "area",
+                "type": "text",
+                "selector": "div.ce_text.block .nonexistent"
+              },
+              {
+                "name": "language",
+                "type": "text",
+                "selector": "div.ce_text.block .nonexistent"
+              },
+              {
+                "name": "duration",
+                "type": "text",
+                "selector": "div.ce_text.block .nonexistent"
+              },
+              {
+                "name": "compensation",
+                "type": "text",
+                "selector": "div.ce_text.block .nonexistent"
+              },
+              {
+                "name": "published",
+                "type": "text",
+                "selector": "div.ce_text.block .nonexistent"
+              },
+              {
+                "name": "position_type",
+                "type": "text",
+                "selector": "div.ce_text.block .nonexistent"
+              },
+              {
+                "name": "research_group",
+                "type": "text",
+                "selector": "div.ce_text.block .nonexistent"
+              }
+            ],
+            "baseFields": [],
+            "baseSelector": "div.mod_article.block"
+          },
+          "schema_sha256": "e8967a3cb952a76b17ea9de32849a2a804b82d987719abc03af308550c866b35"
+        }
+      ],
+      "recorded_schema_status": "ok"
+    },
+    {
+      "id": "marburg-static",
+      "url": "https://www.mpi-marburg.mpg.de/open-positions",
+      "kind": "university",
+      "family": "static-hub",
+      "snapshot": "marburg-static.html",
+      "snapshot_sha256": "de969aa5b5630103d98ede465996ae2d0988cf3b7eb7825feef7c8c51b122b32",
+      "original_sha256": "8b2a3e829c84e432c5fffcc32a1ac5e8fc8eb8a55dc3658c9773ff91fc033175",
+      "original_bytes": 238212,
+      "snapshot_bytes": 93570,
+      "origin": "historical-public-snapshot-September-2026",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [
+        {
+          "source_url": "https://www.mpi-marburg.mpg.de/1270138/internship",
+          "kind": "university",
+          "schema": {
+            "name": "Open Positions",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "selector": "h1.serif"
+              },
+              {
+                "name": "url",
+                "type": "attribute",
+                "selector": "a",
+                "attribute": "href"
+              },
+              {
+                "name": "deadline",
+                "type": "text",
+                "selector": "p.nonexistent"
+              },
+              {
+                "name": "description",
+                "type": "text",
+                "selector": "p:first-of-type"
+              },
+              {
+                "name": "area",
+                "type": "text",
+                "selector": "p.nonexistent"
+              },
+              {
+                "name": "language",
+                "type": "text",
+                "selector": "p.nonexistent"
+              },
+              {
+                "name": "duration",
+                "type": "text",
+                "selector": "p.nonexistent"
+              },
+              {
+                "name": "compensation",
+                "type": "text",
+                "selector": "p.nonexistent"
+              },
+              {
+                "name": "published",
+                "type": "text",
+                "selector": "p.nonexistent"
+              },
+              {
+                "name": "position_type",
+                "type": "text",
+                "selector": "p.nonexistent"
+              },
+              {
+                "name": "research_group",
+                "type": "text",
+                "selector": "p.nonexistent"
+              }
+            ],
+            "baseFields": [],
+            "baseSelector": "article"
+          },
+          "schema_sha256": "37054334e81e60749b9aee0df129b1e24099bdf4ba4b3678b87d07a43b13df9a"
+        }
+      ],
+      "recorded_schema_status": "ok"
+    },
+    {
+      "id": "marburg-rendered",
+      "url": "https://www.mpi-marburg.mpg.de/open-positions",
+      "kind": "university",
+      "family": "rendered-hub",
+      "snapshot": "marburg-rendered.html",
+      "snapshot_sha256": "bc7b87cd43743fc2ee2d0246ef6a1f33f4e2ec76de970a0deadeeb4a033f6c19",
+      "original_sha256": "7d9782c53eb7b9d3ef1ed3ab3ca8fdb2fd420f176f5bd01136ba55cb6e044894",
+      "original_bytes": 126755,
+      "snapshot_bytes": 94677,
+      "origin": "historical-public-snapshot-September-2026",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [
+        {
+          "source_url": "https://www.mpi-marburg.mpg.de/1270138/internship",
+          "kind": "university",
+          "schema": {
+            "name": "Open Positions",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "selector": "h1.serif"
+              },
+              {
+                "name": "url",
+                "type": "attribute",
+                "selector": "a",
+                "attribute": "href"
+              },
+              {
+                "name": "deadline",
+                "type": "text",
+                "selector": "p.nonexistent"
+              },
+              {
+                "name": "description",
+                "type": "text",
+                "selector": "p:first-of-type"
+              },
+              {
+                "name": "area",
+                "type": "text",
+                "selector": "p.nonexistent"
+              },
+              {
+                "name": "language",
+                "type": "text",
+                "selector": "p.nonexistent"
+              },
+              {
+                "name": "duration",
+                "type": "text",
+                "selector": "p.nonexistent"
+              },
+              {
+                "name": "compensation",
+                "type": "text",
+                "selector": "p.nonexistent"
+              },
+              {
+                "name": "published",
+                "type": "text",
+                "selector": "p.nonexistent"
+              },
+              {
+                "name": "position_type",
+                "type": "text",
+                "selector": "p.nonexistent"
+              },
+              {
+                "name": "research_group",
+                "type": "text",
+                "selector": "p.nonexistent"
+              }
+            ],
+            "baseFields": [],
+            "baseSelector": "article"
+          },
+          "schema_sha256": "37054334e81e60749b9aee0df129b1e24099bdf4ba4b3678b87d07a43b13df9a"
+        }
+      ],
+      "recorded_schema_status": "ok"
+    },
+    {
+      "id": "psychiatry-static",
+      "url": "https://www.psych.mpg.de/2905698/job-opportunities",
+      "kind": "university",
+      "family": "embedded-ats",
+      "snapshot": "psychiatry-static.html",
+      "snapshot_sha256": "5dba5743967a00d4897d75e35e22404223e8cd84d7a5c333d260ef7e79cee25c",
+      "original_sha256": "fd141d991e924cc5ee8948beef23714c3dacc1e7023eeb7754086bc3ae78e6aa",
+      "original_bytes": 196007,
+      "snapshot_bytes": 51268,
+      "origin": "historical-public-snapshot-September-2026",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [],
+      "recorded_schema_status": "ok"
+    },
+    {
+      "id": "psychiatry-rendered",
+      "url": "https://www.psych.mpg.de/2905698/job-opportunities",
+      "kind": "university",
+      "family": "rendered-ats",
+      "snapshot": "psychiatry-rendered.html",
+      "snapshot_sha256": "9af997b38156060fefef70a6cfbea2f8a32e4d28fd4ecb9a07ec3ab314ef0b67",
+      "original_sha256": "2ade188f2791a21765e983352dfc7b0de5d0aae660dd210e3c3c5cfa7cb7a2b8",
+      "original_bytes": 112203,
+      "snapshot_bytes": 66569,
+      "origin": "historical-public-snapshot-September-2026",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [],
+      "recorded_schema_status": "ok"
+    },
+    {
+      "id": "hff",
+      "url": "https://honorfrostfoundation.org/grants-offered/scholarships/",
+      "kind": "university",
+      "family": "funding-adapter",
+      "snapshot": "hff.html",
+      "snapshot_sha256": "9df852adc4061f51b2e41e38bc32dec135330e3ce3b4a28b23f0750b8c0c1113",
+      "original_sha256": "f23798453eceb6528f2e5b9da2d273909bec3da1fef70d1de0b398508fc1d7c7",
+      "original_bytes": 105410,
+      "snapshot_bytes": 65093,
+      "origin": "historical-public-snapshot-September-2026",
+      "expected_fields": [
+        "title"
+      ],
+      "http_status": 200,
+      "official_owner": true,
+      "candidates": [
+        {
+          "source_url": "https://honorfrostfoundation.org/grants-awarded/scholarships/",
+          "kind": "university",
+          "schema": {
+            "name": "PhD Vacancy Items",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "selector": "span.fusion-button-text"
+              },
+              {
+                "name": "url",
+                "type": "attribute",
+                "selector": ".",
+                "attribute": "href"
+              },
+              {
+                "name": "deadline",
+                "type": "text",
+                "selector": "span.deadline"
+              },
+              {
+                "name": "description",
+                "type": "text",
+                "selector": "span.description"
+              },
+              {
+                "name": "area",
+                "type": "text",
+                "selector": "span.area"
+              },
+              {
+                "name": "language",
+                "type": "text",
+                "selector": "span.language"
+              },
+              {
+                "name": "duration",
+                "type": "text",
+                "selector": "span.duration"
+              },
+              {
+                "name": "compensation",
+                "type": "text",
+                "selector": "span.compensation"
+              },
+              {
+                "name": "published",
+                "type": "text",
+                "selector": "span.published"
+              },
+              {
+                "name": "position_type",
+                "type": "text",
+                "selector": "span.position_type"
+              },
+              {
+                "name": "research_group",
+                "type": "text",
+                "selector": "span.research_group"
+              }
+            ],
+            "baseSelector": "div.fusion-layout-column.fusion_builder_column.fusion-builder-column-6 a.fusion-button"
+          },
+          "schema_sha256": "9aab314147132c19ebef90a8c5fb3255e4cbb29d2f117efa562e0a6192ef930b"
+        },
+        {
+          "source_url": "https://honorfrostfoundation.org/grants-awarded/scholarships/post-doctoral-scholars/",
+          "kind": "university",
+          "schema": {
+            "name": "Student Placement Cards",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "selector": "h4.fusion-title-heading a"
+              },
+              {
+                "name": "url",
+                "type": "attribute",
+                "selector": "h4.fusion-title-heading a",
+                "attribute": "href"
+              }
+            ],
+            "baseFields": [],
+            "baseSelector": "ul.fusion-grid.fusion-grid-3 > li.post-card"
+          },
+          "schema_sha256": "b30d02418abc287ee2245c5472ff71776d3e1abb921ee5180d07dd0e31f6eb53"
+        }
+      ],
+      "recorded_schema_status": "ok"
+    }
+  ]
+}

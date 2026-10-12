@@ -1,0 +1,626 @@
+{
+  "eth": {
+    "scope": "independent public DOM title/link inventory; not PhD eligibility or current opening",
+    "expected_pairs": [
+      {
+        "title": "Product Owner Web-Plattform (AEM)",
+        "url": "/job/view/JOPG_ethz_CM1PJVqT2jhgnQ7uAc"
+      },
+      {
+        "title": "Labortierpfleger:in (m/w/d) – Fachrichtung Isolatoren",
+        "url": "/job/view/JOPG_ethz_Ox900GWNWw6iNNH1UG"
+      },
+      {
+        "title": "Wissenschaftskommunikator:in im naturwissenschaftlichen Museum focusTerra (m/w/d)",
+        "url": "/job/view/JOPG_ethz_5lIK32aoWJGvdYmcn9"
+      },
+      {
+        "title": "Student Assistant CAS ETH in Climate Innovation",
+        "url": "/job/view/JOPG_ethz_Fwv2alVGOHML26IVXx"
+      },
+      {
+        "title": "Postdoctoral Researcher in Quantum Computing for Fluid Dynamics",
+        "url": "/job/view/JOPG_ethz_VQeVTiLxIiHIluuSb4"
+      },
+      {
+        "title": "Doctoral Position in Risk-Based Inspection and Maintenance Planning of Tunnels",
+        "url": "/job/view/JOPG_ethz_Nnf6ZULCr5G0ihsC1R"
+      },
+      {
+        "title": "Doctoral Position in Uncertainty-Aware Condition Assessment of Tunnels",
+        "url": "/job/view/JOPG_ethz_kMQAkdBBjFt0CMGG8W"
+      },
+      {
+        "title": "Kommunikationsspezialist:in Medienarbeit, Video und Social Media (m/w/d)",
+        "url": "/job/view/JOPG_ethz_xGjw10x7EZ9dklNfEB"
+      },
+      {
+        "title": "Doctoral Researcher in Pulse Electron Paramagnetic Resonance",
+        "url": "/job/view/JOPG_ethz_uXPVmZM0iJ2XgWYNvF"
+      },
+      {
+        "title": "Studentische Mitarbeiter:innen DevOps und Platform Engineer (m/w/d)",
+        "url": "/job/view/12204"
+      },
+      {
+        "title": "Research Engineer for Visual Programming",
+        "url": "/job/view/JOPG_ethz_NAOfGEEMBSiGoWzEEP"
+      },
+      {
+        "title": "Student Research Assistant in Unity Frontend & LLM Backend Development for Digital Einstein",
+        "url": "/job/view/JOPG_ethz_bRFf06eXuEi5Yf0OBv"
+      },
+      {
+        "title": "Fachspezialist:in Marketing & Kommunikation (m/w/d)",
+        "url": "/job/view/JOPG_ethz_qkfpK67TcZNS7KUtrE"
+      },
+      {
+        "title": "Doctoral Student in Photonic Fluids and Frequency Combs",
+        "url": "/job/view/JOPG_ethz_AW85uj6ZkjudWY0Yj2"
+      },
+      {
+        "title": "Hörsaalsupporter:in mit Anteil Abenddienst (m/w/d)",
+        "url": "/job/view/JOPG_ethz_0EbRFSiJwdomYIp7L8"
+      },
+      {
+        "title": "RobotX Postdoctoral Fellowship",
+        "url": "/job/view/JOPG_ethz_58u057ys6BxuEciK5P"
+      },
+      {
+        "title": "RobotX PhD Fellowship 2027",
+        "url": "/job/view/JOPG_ethz_zBtPwWHnM0fumyTFso"
+      },
+      {
+        "title": "PhD Position in Digital Twins of Embryonic Development",
+        "url": "/job/view/JOPG_ethz_TIiC0vSwRKzG8cjCb4"
+      },
+      {
+        "title": "PhD Position in Computational Methods for Digital Twins of Embryonic Development & Disease",
+        "url": "/job/view/JOPG_ethz_eMp6VK8Hmtj3lkloXX"
+      },
+      {
+        "title": "Doktorand:in in Wahrnehmung des Bevölkerungsrückgangs (m/w/d)",
+        "url": "/job/view/JOPG_ethz_CeeOoz3e4bWjwIztTz"
+      },
+      {
+        "title": "PhD Position in Experimental Nonlinear Dynamics and Nanomechanics",
+        "url": "/job/view/JOPG_ethz_7i39aKM0RXxfeH2plT"
+      },
+      {
+        "title": "Postdoctoral Position in Monitoring Load and Recovery in Athletes",
+        "url": "/job/view/JOPG_ethz_j4tfLxruuolgySEZkU"
+      },
+      {
+        "title": "PhD Position in Determinants of Human Performance in Running",
+        "url": "/job/view/JOPG_ethz_7ViZ6MMDY9me3oA5gC"
+      },
+      {
+        "title": "Doctoral Position in Generative AI-Based, Computational Design Methods for Engineering Design",
+        "url": "/job/view/JOPG_ethz_tezsMpGlVuLvSND8CC"
+      },
+      {
+        "title": "Hilfsassistent:in im Bereich Web-Publishing und Support (m/w/d)",
+        "url": "/job/view/JOPG_ethz_xG5L2IjrUSX34AJS2T"
+      },
+      {
+        "title": "Labormitarbeiter:in im Bereich Werkstoffe, Korrosion und Dauerhaftigkeit (m/w/d)",
+        "url": "/job/view/JOPG_ethz_xoycY0syftRiptDI1A"
+      },
+      {
+        "title": "Mediation Support Program Officer in the 'Mediation Support Project'",
+        "url": "/job/view/JOPG_ethz_eEYITXPXNJCRYjSxip"
+      },
+      {
+        "title": "Mediation Support Program Officer in the 'Culture and Religion in Mediation' (CARIM) Program",
+        "url": "/job/view/JOPG_ethz_0r4YkY1enc7TSSEEt4"
+      },
+      {
+        "title": "Gebäudetechniker:in HLKS (m/w/d) – Mit Verantwortung und Herz für unsere Gebäude",
+        "url": "/job/view/JOPG_ethz_nf3rdJShQT5KWJOJnX"
+      },
+      {
+        "title": "Postdoctoral Researcher in Embedded Hardware, FPGA, Edge AI and Smart Sensors",
+        "url": "/job/view/JOPG_ethz_L6KiQC87EcmxboVIBq"
+      },
+      {
+        "title": "Doctoral Researcher Position in Sustainable Supply Chain Management",
+        "url": "/job/view/JOPG_ethz_QTalV0i5PTKnk4q8kN"
+      },
+      {
+        "title": "ETH Space: Finance & Controlling and Office Support",
+        "url": "/job/view/JOPG_ethz_qMIkB186fp0chIn47h"
+      },
+      {
+        "title": "Student Assistant: Future Data Infrastructure of Smart Grids",
+        "url": "/job/view/JOPG_ethz_V57XZPq33p6eycgvgo"
+      },
+      {
+        "title": "Postdoctoral Position in Fungal Cell Biology or Biochemistry / Structural Biology of Starship Transposons",
+        "url": "/job/view/JOPG_ethz_rgVE2FhLWXhKVwySd6"
+      },
+      {
+        "title": "Doctoral position in cognitive and moral heuristics in lay people’s reactions to climate change adaptation",
+        "url": "/job/view/JOPG_ethz_L9EB3dSHxoSQSAypSG"
+      },
+      {
+        "title": "PhD Researcher",
+        "url": "/job/view/JOPG_ethz_hzimCyltZRK3k6jfqs"
+      },
+      {
+        "title": "Linux Systemingenieur:in (m/w/d)",
+        "url": "/job/view/JOPG_ethz_U3rgbGM1qqBpQMYVNt"
+      },
+      {
+        "title": "Flight Software Systems Engineer for Space Missions",
+        "url": "/job/view/JOPG_ethz_o1CzcEIOPQaDfAcBH4"
+      },
+      {
+        "title": "Doctoral Student in Design and Analysis of Human-AI Systems",
+        "url": "/job/view/JOPG_ethz_hfJQki76KJw8Dwn0Pv"
+      },
+      {
+        "title": "ETH AI Center Doctoral Fellowship 2027",
+        "url": "/job/view/12136"
+      },
+      {
+        "title": "ETH AI Center Post-Doc Fellowship 2027",
+        "url": "/job/view/12137"
+      },
+      {
+        "title": "Postdoctoral Researcher: Experimental Fracture Mechanics of Soft Materials",
+        "url": "/job/view/JOPG_ethz_URhJoxBUBdeERNqLjC"
+      },
+      {
+        "title": "PhD Positions - Max Planck ETH Center for Learning Systems (CLS)",
+        "url": "/job/view/12140"
+      },
+      {
+        "title": "Hausmeister:in (m/w/d) – Mit Verantwortung und Herz für unsere Gebäude",
+        "url": "/job/view/JOPG_ethz_4IJ0ZlMFzpCQZI6wck"
+      },
+      {
+        "title": "Doctoral Position for Synthetic Biology-Inspired Therapies",
+        "url": "/job/view/JOPG_ethz_EdNelUTz9tatugJayG"
+      },
+      {
+        "title": "Postdoctoral Position for Synthetic Biology-Inspired Therapies",
+        "url": "/job/view/JOPG_ethz_UvWKfPOUvmyiRH0Udq"
+      },
+      {
+        "title": "Postdoctoral Position in Advanced Bioelectronic & Electrical Conversion Research",
+        "url": "/job/view/JOPG_ethz_lGyNbZrvjzzgjT7U10"
+      },
+      {
+        "title": "Doctoral Position in Advanced Bioelectronic & Electrical Conversion Research",
+        "url": "/job/view/JOPG_ethz_pAPaF3G1Cho8jqgZse"
+      },
+      {
+        "title": "Informationsspezialist:in im Bestandsmanagement (m/w/d)",
+        "url": "/job/view/JOPG_ethz_IXbn4edNVp3qx7IFu7"
+      },
+      {
+        "title": "Informationsspezialist:in im Metadatenmanagement (m/w/d)",
+        "url": "/job/view/JOPG_ethz_r4sk2rJavDF3G25UXK"
+      },
+      {
+        "title": "Office Manager at the Chair of Global Security",
+        "url": "/job/view/JOPG_ethz_DgfeAMtNrOfjGsSuCO"
+      },
+      {
+        "title": "PhD Position in Atmospheric Chemistry",
+        "url": "/job/view/JOPG_ethz_UtuGzrXTpseTskgjY9"
+      },
+      {
+        "title": "Researcher (ML focus) in Soft Robotics Systems",
+        "url": "/job/view/JOPG_ethz_osPAfgMWNM4uQUVsCP"
+      },
+      {
+        "title": "Senior Data Architect (m/w/d)",
+        "url": "/job/view/JOPG_ethz_HDEseYpQ6hGpNOxW4w"
+      },
+      {
+        "title": "Bioinformatician – Single-Cell Omics in Vascular & Skeletal Muscle Biology",
+        "url": "/job/view/JOPG_ethz_MHYnNeCYPII0ygi4H9"
+      },
+      {
+        "title": "Postdoctoral position in Systems and Hardware Security",
+        "url": "/job/view/JOPG_ethz_1RQKq1dzfZNS9kPv0E"
+      },
+      {
+        "title": "Postdoctoral Researcher in Interiors and Evolution of Sub-Neptunes",
+        "url": "/job/view/JOPG_ethz_KmP55NqLRcMmKXZuna"
+      },
+      {
+        "title": "Doctoral Position in sparse reconstruction of virtual histology images",
+        "url": "/job/view/JOPG_ethz_pGJRE5rDAavyV6eLYI"
+      },
+      {
+        "title": "Mediamatiker:in EFZ (m/w/d) 2027",
+        "url": "/job/view/JOPG_ethz_qlftX17F8qb3wQxLyd"
+      },
+      {
+        "title": "Doctoral Position in contact mechanics of architected interfaces",
+        "url": "/job/view/JOPG_ethz_DPag8hXtGdgomqwMdO"
+      },
+      {
+        "title": "Quality of Education Officer",
+        "url": "/job/view/JOPG_ethz_INHVkFm7btcpysqYwX"
+      },
+      {
+        "title": "HPC Systems Software Engineer – OpenCHAMI for Lugano or Zürich",
+        "url": "/job/view/JOPG_ethz_xNU4jaRuX9tlmqmJJB"
+      },
+      {
+        "title": "PhD Researcher - PDTx",
+        "url": "/job/view/JOPG_ethz_5jfFbj5xGmFSyYoPWI"
+      },
+      {
+        "title": "Leiter:in Technisches Gebäudemanagement (TGM) (m/w/d) – Mit Verantwortung und Herz für unsere Gebäude",
+        "url": "/job/view/JOPG_ethz_yMji88yvHcGEduZOS5"
+      },
+      {
+        "title": "Projektleiter:in IH/IS Gebäudetechnik & Infrastruktur (m/w/d)",
+        "url": "/job/view/JOPG_ethz_NwixDnw016KLZG2MGE"
+      },
+      {
+        "title": "Postdoctoral Position in Soccer Analytics",
+        "url": "/job/view/JOPG_ethz_9ztFwJ2Wmodh4TFajr"
+      },
+      {
+        "title": "Doctoral Student in High-throughput Analysis of Protein-Protein Interactions",
+        "url": "/job/view/JOPG_ethz_eQatl0pgVb6ow4UwxK"
+      },
+      {
+        "title": "Labortechniker:in im Hochspannungslabor (m/w/d)",
+        "url": "/job/view/JOPG_ethz_h2mfMU9KNBhcXo5D5p"
+      },
+      {
+        "title": "Doctoral Student in Neuromotor Interfaces for Dexterous Robot Teleoperation (multimodal egocentric vision + EMG)",
+        "url": "/job/view/JOPG_ethz_fEsJT6dU0XVbGPtHhO"
+      },
+      {
+        "title": "NOMIS Foundation ETH Postdoctoral Fellowship",
+        "url": "/job/view/JOPG_ethz_HADDooajzVrtCF2fGd"
+      },
+      {
+        "title": "AI for Science Engineer",
+        "url": "/job/view/JOPG_ethz_G5U0mMTovC6WeOdD9F"
+      },
+      {
+        "title": "Postdoctoral Position in Optical Systems for Advanced Biofabrication",
+        "url": "/job/view/JOPG_ethz_NQ0t1anUYFmmVwevuG"
+      },
+      {
+        "title": "Projekteinkäufer:in Dienstleistungen und Services (m/w/d)",
+        "url": "/job/view/JOPG_ethz_SksxJNWCEnDiqK0smp"
+      },
+      {
+        "title": "Fachperson Betriebsunterhalt EFZ (m/w/d) 2027 - Hausdienst - Basel",
+        "url": "/job/view/JOPG_ethz_o1vNvmPQLykC2qonMM"
+      },
+      {
+        "title": "Gruppenleitung Educational Software Engineering (m/w/d)",
+        "url": "/job/view/JOPG_ethz_NWTmX7lwuI3QrOGWH9"
+      },
+      {
+        "title": "Partnerships and Research Funding Manager",
+        "url": "/job/view/JOPG_ethz_KrZkN4TsckVwArXTdY"
+      },
+      {
+        "title": "Facility Manager",
+        "url": "/job/view/JOPG_ethz_3WHgzaRecSAwEDOAic"
+      },
+      {
+        "title": "Technische:r Spezialist:in für Nanofabrikationsanlagen und Infrastruktur (m/w/d)",
+        "url": "/job/view/JOPG_ethz_PiKcNFhW84Jnzdrsoh"
+      },
+      {
+        "title": "Studienkoordinator:in (m/w/d)",
+        "url": "/job/view/JOPG_ethz_7gikVYjIkZZcbykZfL"
+      },
+      {
+        "title": "Nanofabrication R&D Engineer",
+        "url": "/job/view/JOPG_ethz_jQbCEZBJ4CDH0gx68u"
+      },
+      {
+        "title": "Fachperson Betriebsunterhalt EFZ (m/w/d) 2027 - Hausdienst - Zürich",
+        "url": "/job/view/JOPG_ethz_smgcezMC3tK7ZbfeTI"
+      },
+      {
+        "title": "Head of Research Data Management Facility",
+        "url": "/job/view/JOPG_ethz_vsmlFlflTKwJazo8iw"
+      },
+      {
+        "title": "Postdoctoral Fellowship at Design++",
+        "url": "/job/view/JOPG_ethz_sKGJYv288uud0RYkmK"
+      },
+      {
+        "title": "Postdoctoral Fellow / Process Engineer for metal assisted chemical etching",
+        "url": "/job/view/JOPG_ethz_7qpUJghiPxjjg3LgH1"
+      },
+      {
+        "title": "Postdoc in modelling of early prokaryote evolution and interaction with earth geodynamics",
+        "url": "/job/view/JOPG_ethz_xPEbTe5DV76cK9b0qO"
+      },
+      {
+        "title": "Doctoral Position in solid-state transformer development, with a focus on high-power medium-frequency transformers",
+        "url": "/job/view/JOPG_ethz_4pQ2q5Y9qBeuGF9aBv"
+      },
+      {
+        "title": "Postdoctoral Positions in Robot Learning and Soft, Musculoskeletal, and Biohybrid Robotics",
+        "url": "/job/view/JOPG_ethz_0Dk3rwrfGt0kHlu7Rh"
+      },
+      {
+        "title": "Doctoral Position in neutral-atom quantum computing",
+        "url": "/job/view/JOPG_ethz_VICQKrWgFLEoyEPTP7"
+      },
+      {
+        "title": "Doctoral Positions in Robot Learning and Soft, Musculoskeletal, and Biohybrid Robotics",
+        "url": "/job/view/JOPG_ethz_d3lDgHgDI4ewDFQ1Fb"
+      },
+      {
+        "title": "Scientific Assistant – Biomedical Data Science & Spinal Cord Injury Research",
+        "url": "/job/view/JOPG_ethz_QpwSDjGTFrOfniEFrV"
+      },
+      {
+        "title": "Office Manager:in am Lehrstuhl für KI in Mechanik und Fertigung (m/w/d)",
+        "url": "/job/view/JOPG_ethz_gtMYyk17Udl4FFFV6t"
+      },
+      {
+        "title": "Doctoral Position in Debris Flow Monitoring",
+        "url": "/job/view/JOPG_ethz_RXOaQH0DOpiNTKwE75"
+      },
+      {
+        "title": "Doctoral Position in mechanics of frictional particle suspensions",
+        "url": "/job/view/JOPG_ethz_mZ7lFXZluUIyWaON1N"
+      },
+      {
+        "title": "Doctoral Position in functional oxide thin films",
+        "url": "/job/view/JOPG_ethz_kzU3Bx2lE8HT9YtVg4"
+      },
+      {
+        "title": "Postdoctoral Researcher (OCCL)",
+        "url": "/job/view/JOPG_ethz_eB7YadA8OsfYmqD1u4"
+      },
+      {
+        "title": "Research Assistants (Law, Computer Science, or related fields)",
+        "url": "/job/view/JOPG_ethz_0z7L6XHbhhGWTMZS1r"
+      },
+      {
+        "title": "Spezialist:in Arbeitssicherheit und Gesundheitsschutz (m/w/d)",
+        "url": "/job/view/JOPG_ethz_Ztb8yMz2qN1JyezuM9"
+      },
+      {
+        "title": "Postdoctoral Researcher - Neurostimulation for Stroke Rehabilitation",
+        "url": "/job/view/JOPG_ethz_GBb3OdHnnRIPeSabrX"
+      },
+      {
+        "title": "Doctoral position in experimental characterization of semiconductor nanocrystals",
+        "url": "/job/view/JOPG_ethz_zqMdn6OeN8wS7ZDRfz"
+      },
+      {
+        "title": "Doctoral position in theoretical modeling of nanocrystal growth",
+        "url": "/job/view/JOPG_ethz_PItOe6oQJFLOGTo0rn"
+      },
+      {
+        "title": "Gebäudetechniker:in HLKKSE (m/w/d) – Mit Verantwortung und Herz für unsere Gebäude",
+        "url": "/job/view/JOPG_ethz_Z7OndPgBOm7sbpwkNC"
+      },
+      {
+        "title": "Doctoral Student in Operational Decision Making with Data Science",
+        "url": "/job/view/JOPG_ethz_N5adwDR63ei5mvEd2z"
+      },
+      {
+        "title": "Legal Counsel im Bereich der Humanforschung (m/w/d)",
+        "url": "/job/view/JOPG_ethz_Jpk5hTbut4X6uJlGRu"
+      },
+      {
+        "title": "Postdoctoral Researcher – Tactile Sensing for Dexterous Manipulation",
+        "url": "/job/view/JOPG_ethz_JljSxe71PrbQYnXQoB"
+      },
+      {
+        "title": "Postdoctoral and PhD Positions in Neurotechnology: Drug/Biologics Carrier Formulation & Chemical Engineering for Focused Ultrasound-Mediated Brain Drug Delivery",
+        "url": "/job/view/JOPG_ethz_P9v49K34WzF1yE3Son"
+      },
+      {
+        "title": "Natural Hazards Mission Lead",
+        "url": "/job/view/JOPG_ethz_KNScGkMQXFtpEkjjIm"
+      },
+      {
+        "title": "Doctoral Position in circularly polarized attosecond pulses and chiral charge migration",
+        "url": "/job/view/JOPG_ethz_ZFh1EQy7dSPVVYp5Fe"
+      },
+      {
+        "title": "Postdoctoral Position in attosecond chiroptical coincidence spectroscopy",
+        "url": "/job/view/JOPG_ethz_F9OMMLCxFXrZnitx0m"
+      },
+      {
+        "title": "Postdoctoral fellowship on translational research in daylighting for human health and well-being",
+        "url": "/job/view/JOPG_ethz_tw2NqKjprjOKgicyhv"
+      },
+      {
+        "title": "PhD Positions in Neurotechnology: Next Generation Non-invasive Neurotechnologies & Brain Therapies",
+        "url": "/job/view/JOPG_ethz_7fnNYGEQBYxvwLABPA"
+      },
+      {
+        "title": "PhD position in Modeling and Control of Nonlinear Dynamical Systems from Data",
+        "url": "/job/view/JOPG_ethz_fV3FNoofTG427Xo88T"
+      },
+      {
+        "title": "Landwirtschaftliche:r Mitarbeiter:in Forschungsstation Früebüel (m/w/d)",
+        "url": "/job/view/JOPG_ethz_HWURgWr0zhn0vhHkTh"
+      },
+      {
+        "title": "Betriebsleiter:in Forschungsstation Früebüel (m/w/d)",
+        "url": "/job/view/JOPG_ethz_gSBsyXkVBhYzitmZqZ"
+      },
+      {
+        "title": "PhD opening in material science of stone conservation",
+        "url": "/job/view/JOPG_ethz_8mKiqyt08ncBT4Vjmf"
+      },
+      {
+        "title": "Doktorand:in in Rechtswissenschaften (m/w/d)",
+        "url": "/job/view/JOPG_ethz_yD8SBG1VJIv6DUeuOI"
+      },
+      {
+        "title": "Systems Engineer – Platform Automation",
+        "url": "/job/view/JOPG_ethz_WutDHRW09osQjhn0JB"
+      },
+      {
+        "title": "DevOps Engineer",
+        "url": "/job/view/JOPG_ethz_pPQbOEVFpuNEe6dwGQ"
+      },
+      {
+        "title": "Elektrotechniker oder Elektroingenieur (m/w/d)",
+        "url": "/job/view/JOPG_ethz_xfuKg5qPN9KmLA8WvS"
+      },
+      {
+        "title": "Doctoral student position – Evaluating novel mineral sources for treatment of micronutrient deficiencies in humans",
+        "url": "/job/view/JOPG_ethz_PeBFLlVSXBQT8tuOqj"
+      }
+    ]
+  },
+  "fbk": {
+    "scope": "independent public DOM title/link inventory; not PhD eligibility or current opening",
+    "expected_pairs": [
+      {
+        "title": "Tenure Track position for a Researcher on Human Mobility and Complex Urban Systems at Bruno Kessler Foundation, Centre for Digital Society",
+        "url": "/Annunci/Jobs_Tenure_Track_position_for_a_Researcher_on_Human_Mobility_and_Complex_Urban_Systems_at_Bruno_Kessler_Foundation_Centre_for_Digital_Society_249828993.htm"
+      },
+      {
+        "title": "A Project Manager for European Research and Innovation Projects in Artificial Intelligence",
+        "url": "/Annunci/Jobs_A_Project_Manager_for_European_Research_and_Innovation_Projects_in_Artificial_Intelligence_249828832.htm"
+      },
+      {
+        "title": "La Fondazione Bruno Kessler ricerca un/una Cybersecurity Analyst per il Joint Lab per la Cybersecurity di FBK",
+        "url": "/Annunci/Jobs_La_Fondazione_Bruno_Kessler_ricerca_un_una_Cybersecurity_Analyst_per_il_Joint_Lab_per_la_Cybersecurity_di_FBK_249794055.htm"
+      },
+      {
+        "title": "Tenure Track position for an Innovation Project Manager at Bruno Kessler Foundation, Strategic Planning.",
+        "url": "/Annunci/Jobs_Tenure_Track_position_for_an_Innovation_Project_Manager_at_Bruno_Kessler_Foundation_Strategic_Planning_249778689.htm"
+      },
+      {
+        "title": "Tecnico di laboratori per l’Unità MNF del Centro di Ricerca Sensors & Devices",
+        "url": "/Annunci/Jobs_Tecnico_di_laboratori_per_l_Unità_MNF_del_Centro_di_Ricerca_Sensors_Devices_249766453.htm"
+      },
+      {
+        "title": "La Fondazione Bruno Kessler ricerca una figura di IT Documentation & Training Specialist per il Servizio Soluzioni Digitali e Infrastrutture IT",
+        "url": "/Annunci/Jobs_La_Fondazione_Bruno_Kessler_ricerca_una_figura_di_IT_Documentation_Training_Specialist_per_il_Servizio_Soluzioni_Digitali_e_Infrastrutture_IT_249741366.htm"
+      },
+      {
+        "title": "Tenure Track position for a Technologist in Knowledge and Project Management",
+        "url": "/Annunci/Jobs_Tenure_Track_position_for_a_Technologist_in_Knowledge_and_Project_Management_249732290.htm"
+      },
+      {
+        "title": "A Project Manager in the field of Rural and territorial development for the Horizon Europe project TERRAE",
+        "url": "/Annunci/Jobs_A_Project_Manager_in_the_field_of_Rural_and_territorial_development_for_the_Horizon_Europe_project_TERRAE_249550838.htm"
+      }
+    ]
+  },
+  "champ-rendered": {
+    "scope": "independent public DOM title/link inventory; not PhD eligibility or current opening",
+    "expected_pairs": [
+      {
+        "title": "Communication Designer",
+        "url": "https://www.fchampalimaud.org/offers/communication-designer"
+      },
+      {
+        "title": "Microscopist and Imaging Specialist (PhD level)",
+        "url": "https://www.fchampalimaud.org/offers/microscopist-and-imaging-specialist-phd-level"
+      },
+      {
+        "title": "Hardware Technician - Immersive Systems",
+        "url": "https://www.fchampalimaud.org/offers/hardware-technician-immersive-systems"
+      },
+      {
+        "title": "Pathology Research and Macroscopy Technician",
+        "url": "https://www.fchampalimaud.org/offers/pathology-research-and-macroscopy-technician"
+      },
+      {
+        "title": "Rodent Research Technician",
+        "url": "https://www.fchampalimaud.org/offers/rodent-research-technician-2"
+      },
+      {
+        "title": "Bioinformatician (Cancer Genomics Lab - Botton-Champalimaud Pancreatic Cancer Center)",
+        "url": "https://www.fchampalimaud.org/offers/bioinformatician-cancer-genomics-lab-botton-champalimaud-pancreatic-cancer-center-0"
+      },
+      {
+        "title": "Lab Administrator",
+        "url": "https://www.fchampalimaud.org/offers/lab-administrator"
+      },
+      {
+        "title": "PhD Student Position - Learning Lab",
+        "url": "https://www.fchampalimaud.org/offers/phd-student-position-learning-lab"
+      },
+      {
+        "title": "Enfermeiros para o Internamento",
+        "url": "https://www.fchampalimaud.org/offers/enfermeiros-para-o-internamento"
+      }
+    ]
+  },
+  "umantis": {
+    "scope": "raw extraction must point to public description, not application login; downstream existing repair excluded",
+    "expected_pairs": [
+      {
+        "title": "Economic Experimentation Guest Researcher Programme",
+        "url": "/Vacancies/490/Description/2"
+      }
+    ]
+  },
+  "hff": {
+    "scope": "manually audited degree/offer sections; no invented year or opening verdict",
+    "expected_pairs": [
+      {
+        "title": "Masters — Open Scholarships",
+        "url": null
+      },
+      {
+        "title": "PhD — Open Scholarships",
+        "url": null
+      },
+      {
+        "title": "PhD — Targeted Scholarships",
+        "url": null
+      }
+    ]
+  },
+  "ino-jobs": {
+    "scope": "generic heading/information/spontaneous application is not an individual advertised vacancy; no domain rejection",
+    "expected_pairs": []
+  },
+  "iow-phd": {
+    "scope": "generic heading/information/spontaneous application is not an individual advertised vacancy; no domain rejection",
+    "expected_pairs": []
+  },
+  "marburg-static": {
+    "scope": "generic heading/information/spontaneous application is not an individual advertised vacancy; no domain rejection",
+    "expected_pairs": []
+  },
+  "marburg-rendered": {
+    "scope": "generic heading/information/spontaneous application is not an individual advertised vacancy; no domain rejection",
+    "expected_pairs": []
+  },
+  "meteo": {
+    "scope": "defer without job verdict",
+    "expected_pairs": []
+  },
+  "ino-staff": {
+    "scope": "defer without job verdict",
+    "expected_pairs": []
+  },
+  "isti": {
+    "scope": "no extraction adjudicated before missing generation/rendering input resolved"
+  },
+  "ait": {
+    "scope": "no extraction adjudicated before missing generation/rendering input resolved"
+  },
+  "champ-static": {
+    "scope": "no extraction adjudicated before missing generation/rendering input resolved"
+  },
+  "psychiatry-static": {
+    "scope": "embedded adapter marker only; postings were not fetched"
+  },
+  "psychiatry-rendered": {
+    "scope": "embedded adapter marker only; postings were not fetched"
+  }
+}

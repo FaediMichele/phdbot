@@ -21,6 +21,7 @@ jobs:
     env:
       PYTHONPATH: src
       DDW_SOURCE_COMMIT: ${{ github.sha }}
+      LITELLM_LOCAL_MODEL_COST_MAP: 'True'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -29,11 +30,13 @@ jobs:
         with:
           python-version: '3.13'
       - name: Install only worker dependencies
-        run: python -m pip install -r tools/ddw/requirements.txt
+        run: python -m pip install -r tools/ddw/schema-requirements.txt
       - name: Isolated contract and interruption tests
         run: python -m unittest discover -s tests/ddw -v
       - name: Execute fixture assignment and build portable artifact
         run: python tools/ddw/experiment.py ddw-artifacts
+      - name: Compare full validator on public frozen snapshots
+        run: python tools/ddw/schema_experiment.py tests/ddw/snapshots/manifest.json ddw-artifacts/schema
       - name: Retain bounded public experiment evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

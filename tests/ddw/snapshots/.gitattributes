@@ -1,0 +1,2 @@
+# Preserve source-page whitespace in hash-addressed experimental snapshots.
+*.html -whitespace

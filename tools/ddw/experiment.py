@@ -23,7 +23,10 @@ worker.verify(directory, receipt["work_key"])
 
 files = ["src/phd_searcher/__init__.py", "src/phd_searcher/pipeline/__init__.py",
          "src/phd_searcher/pipeline/schema_quality.py", "tools/ddw/requirements.txt",
-         "tools/ddw/README.md", *[str(p.relative_to(ROOT)) for p in (ROOT / "src/phd_searcher/ddw").glob("*.py")]]
+         "tools/ddw/schema-requirements.txt", "tools/ddw/README.md",
+         *[str(p.relative_to(ROOT)) for p in (ROOT / "src/phd_searcher/ddw").glob("*.py")],
+         *[str(p.relative_to(ROOT)) for p in (ROOT / "src/phd_searcher/ddw/reference").glob("*.py")],
+         "src/phd_searcher/ddw/reference/provenance.json"]
 with zipfile.ZipFile(output / "worker.zip", "w", zipfile.ZIP_DEFLATED) as archive:
     for name in sorted(files):
         archive.write(ROOT / name, name)
