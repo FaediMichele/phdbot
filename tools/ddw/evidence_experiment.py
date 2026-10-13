@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import argparse
-import base64
 import gzip
-import io
 import json
 import os
 import tempfile
@@ -15,22 +13,17 @@ from pathlib import Path
 from typing import Any, cast
 from urllib.parse import urlsplit
 
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from html_canary import policy
 
-from phd_searcher.ddw import worker
-
-MAX_PLAIN = 8_000_000
-MAX_ENVELOPE = 12_000_000
+from phd_searcher.ddw import delivery, worker
+from phd_searcher.ddw.delivery import MAX_ENVELOPE, MAX_PLAIN, seal, unseal  # noqa: F401
 
 
 def read_manifest(path: Path, recipient: Path, *, check_expiry: bool = True) -> dict[str, Any]:
     manifest = cast(dict[str, Any], json.loads(path.read_bytes()))
     task = manifest["task"]
     worker.validate(task)
-    if (manifest["version"] != 1 or manifest["operation"] != "private-evidence-canary"
+    if (manifest["version"] != 1 or manifest["operation"] not in {"private-evidence-canary", "ddw-evidence-v1"}
             or not 1 <= len(task["pages"]) <= 10
             or worker.digest(worker.encoded(task)) != manifest["task_sha256"]
             or worker.digest(recipient.read_bytes()) != manifest["recipient_sha256"]
@@ -39,41 +32,6 @@ def read_manifest(path: Path, recipient: Path, *, check_expiry: bool = True) -> 
     if check_expiry and datetime.now(UTC) >= datetime.fromisoformat(task["expires_at"]):
         raise ValueError("expired_evidence_assignment")
     return manifest
-
-
-def seal(payload: dict[str, Any], public_pem: bytes, context: dict[str, Any]) -> dict[str, Any]:
-    raw = worker.encoded(payload)
-    if len(raw) > MAX_PLAIN:
-        raise ValueError("private_payload_limit")
-    public_key = serialization.load_pem_public_key(public_pem)
-    if not isinstance(public_key, rsa.RSAPublicKey) or public_key.key_size < 3072:
-        raise ValueError("invalid_recipient")
-    key, nonce = AESGCM.generate_key(bit_length=256), os.urandom(12)
-    aad = worker.encoded(context)
-    cipher = AESGCM(key).encrypt(nonce, gzip.compress(raw), aad)
-    wrapped = public_key.encrypt(key, padding.OAEP(mgf=padding.MGF1(hashes.SHA256()),
-                                                  algorithm=hashes.SHA256(), label=aad))
-    return {"version": 1, "context": context, "nonce": base64.b64encode(nonce).decode(),
-            "wrapped_key": base64.b64encode(wrapped).decode(), "ciphertext": base64.b64encode(cipher).decode()}
-
-
-def unseal(envelope: dict[str, Any], private_pem: bytes, expected: dict[str, Any]) -> dict[str, Any]:
-    if envelope["version"] != 1 or envelope["context"] != expected:
-        raise ValueError("delivery_identity_mismatch")
-    private_key = serialization.load_pem_private_key(private_pem, password=None)
-    if not isinstance(private_key, rsa.RSAPrivateKey):
-        raise ValueError("invalid_private_key")
-    aad = worker.encoded(expected)
-    key = private_key.decrypt(base64.b64decode(envelope["wrapped_key"], validate=True),
-                              padding.OAEP(mgf=padding.MGF1(hashes.SHA256()),
-                                           algorithm=hashes.SHA256(), label=aad))
-    compressed = AESGCM(key).decrypt(base64.b64decode(envelope["nonce"], validate=True),
-                                     base64.b64decode(envelope["ciphertext"], validate=True), aad)
-    with gzip.GzipFile(fileobj=io.BytesIO(compressed)) as stream:
-        raw = stream.read(MAX_PLAIN + 1)
-    if len(raw) > MAX_PLAIN:
-        raise ValueError("private_payload_limit")
-    return cast(dict[str, Any], json.loads(raw))
 
 
 def check_policies(manifest: dict[str, Any]) -> tuple[list[dict[str, Any]], frozenset[str]]:
@@ -92,14 +50,24 @@ def check_policies(manifest: dict[str, Any]) -> tuple[list[dict[str, Any]], froz
     return policies, frozenset(blocked)
 
 
-def execute(manifest: dict[str, Any], public_pem: bytes, output: Path) -> dict[str, Any]:
+def execute(manifest: dict[str, Any], public_pem: bytes, output: Path,
+            signing_private_pem: bytes | None = None) -> dict[str, Any]:
+    context = manifest.get("context")
+    if manifest["operation"] == "ddw-evidence-v1" and (not isinstance(context, dict) or signing_private_pem is None
+                or context.get("operation") != "ddw-evidence-v1"
+                or context.get("task_sha256") != manifest["task_sha256"]
+                or context.get("recipient_sha256") != manifest["recipient_sha256"]
+                or context.get("source_commit") != os.environ.get("DDW_SOURCE_COMMIT")
+                or type(context.get("attempt")) is not int or context["attempt"] < 1):
+        raise ValueError("invalid_central_assignment")
     output.mkdir(parents=True, exist_ok=False)
     started = time.perf_counter()
     task = manifest["task"]
     policies, blocked = check_policies(manifest)
     with tempfile.TemporaryDirectory(prefix="phdbot-private-evidence-") as temporary:
         acquisition_started = time.perf_counter()
-        directory, receipt = worker.run(task, Path(temporary), network=True, blocked_hosts=blocked)
+        directory, receipt = worker.run(task, Path(temporary), attempt=context["attempt"] if context else 1,
+                                        network=True, blocked_hosts=blocked)
         acquisition_seconds = time.perf_counter() - acquisition_started
         verification_started = time.perf_counter()
         worker.verify(directory, manifest["task_sha256"])
@@ -107,12 +75,14 @@ def execute(manifest: dict[str, Any], public_pem: bytes, output: Path) -> dict[s
         payload = {"task": task, "receipt": receipt,
                    "results": {str(entry["index"]): json.loads((directory / f"page-{entry['index']}.json").read_bytes())
                                for entry in receipt["pages"] if entry["state"] == "ok"}}
-        context = {"operation": "private-evidence-canary", "task_sha256": manifest["task_sha256"],
+        context = context or {"operation": "private-evidence-canary", "task_sha256": manifest["task_sha256"],
                    "recipient_sha256": manifest["recipient_sha256"],
                    "source_commit": os.environ.get("DDW_SOURCE_COMMIT", "local-uncommitted")}
         seal_started = time.perf_counter()
         sealed = seal(payload, public_pem, context)
         sealing_seconds = time.perf_counter() - seal_started
+        if signing_private_pem is not None:
+            sealed = delivery.sign(sealed, signing_private_pem)
         worker.write_json(output / "evidence.sealed.json", sealed)
         summary = {"version": 1, "context": context, "build_id": receipt["build_id"],
                    "state": receipt["state"], "started_at": receipt["started_at"],
@@ -137,10 +107,12 @@ def main() -> None:
     parser.add_argument("recipient", type=Path)
     parser.add_argument("output", type=Path)
     parser.add_argument("--allow-network", action="store_true")
+    parser.add_argument("--signing-key", type=Path, help="assigned private Ed25519 key; never publish")
     args = parser.parse_args()
     if not args.allow_network:
         parser.error("explicit --allow-network required")
-    result = execute(read_manifest(args.manifest, args.recipient), args.recipient.read_bytes(), args.output)
+    result = execute(read_manifest(args.manifest, args.recipient), args.recipient.read_bytes(), args.output,
+                     args.signing_key.read_bytes() if args.signing_key else None)
     print(json.dumps({"state": result["state"], "pages": result["pages"]}))
     raise SystemExit(0 if any(p["state"] == "ok" for p in result["pages"]) else 2)
 

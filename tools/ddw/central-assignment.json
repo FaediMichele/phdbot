@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "operation": "ddw-evidence-v1",
+  "context": {
+    "operation": "ddw-evidence-v1",
+    "assignment_id": "central-20261014-127502",
+    "task_sha256": "a8ef28045680d4afe6a4e72fc311bf1398394caf18fb6f310e9830601e337085",
+    "attempt": 1,
+    "recipient_sha256": "0fb8215a7f960460cf98054c76e810ecde0ee3cc9060dffe92eae6ad813cb453"
+  },
+  "task": {
+    "version": 1,
+    "cycle": "central-20261014-127502",
+    "expires_at": "2026-10-14T00:07:14.579536+00:00",
+    "timeout_seconds": 10,
+    "allowed_hosts": [
+      "jobs.nottingham.ac.uk"
+    ],
+    "pages": [
+      {
+        "url": "https://jobs.nottingham.ac.uk/vacancy.aspx?ref=ENG2321926",
+        "schema": {
+          "name": "Explicit detail HTML acquisition; title only",
+          "baseSelector": "html",
+          "fields": [
+            {
+              "name": "title",
+              "selector": "title",
+              "type": "text"
+            }
+          ]
+        },
+        "schema_sha256": "30c7a9431bbcf29f7179207174ca0e0cc5b9b40afe186e0a682e162be986fe3b"
+      }
+    ]
+  },
+  "task_sha256": "a8ef28045680d4afe6a4e72fc311bf1398394caf18fb6f310e9830601e337085",
+  "recipient_sha256": "0fb8215a7f960460cf98054c76e810ecde0ee3cc9060dffe92eae6ad813cb453",
+  "signer_sha256": "40156ec4d225456a46f4d14c9e4b50de2f8fab0f3ca6afc7f0ba8d5795da3759",
+  "robots_sha256": {
+    "jobs.nottingham.ac.uk": "86e706d1576aff049f3a425fb1764dbf5152bf2562cc783a3495ae01a47002eb"
+  }
+}

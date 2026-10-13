@@ -52,7 +52,7 @@ class EvidenceDeliveryTests(unittest.TestCase):
 
     def test_decompression_is_bounded(self):
         envelope = experiment.seal({"text": "x" * 100}, self.public, self.context)
-        with patch.object(experiment, "MAX_PLAIN", 32), self.assertRaisesRegex(ValueError, "limit"):
+        with patch("phd_searcher.ddw.delivery.MAX_PLAIN", 32), self.assertRaisesRegex(ValueError, "limit"):
             experiment.unseal(envelope, self.private, self.context)
 
     def test_policy_change_prevents_any_html_request(self):
@@ -97,3 +97,35 @@ class EvidenceDeliveryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_central_assignment_produces_signed_encrypted_delivery(tmp_path, monkeypatch):
+    from cryptography.hazmat.primitives.asymmetric import ed25519
+
+    from phd_searcher.ddw import delivery, worker
+    key = rsa.generate_private_key(public_exponent=65537, key_size=3072)
+    signer = ed25519.Ed25519PrivateKey.generate()
+    public = key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
+    private = key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
+    signing = signer.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
+    signing_public = signer.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
+    html = "<main><h1>Synthetic opportunity</h1></main>"
+    schema = {"baseSelector": "main", "fields": [{"name": "title", "selector": "h1", "type": "text"}]}
+    task = {"version": 1, "cycle": "signed-test", "expires_at": (datetime.now(UTC) + timedelta(hours=1)).isoformat(),
+            "timeout_seconds": 2, "allowed_hosts": ["example.test"], "pages": [{"url": "https://example.test/job",
+            "html": html, "html_sha256": worker.digest(html.encode()), "schema": schema,
+            "schema_sha256": worker.digest(worker.encoded(schema))}]}
+    context = {"operation": "ddw-evidence-v1", "assignment_id": "signed-test", "attempt": 1,
+               "task_sha256": worker.digest(worker.encoded(task)), "recipient_sha256": worker.digest(public),
+               "source_commit": "a" * 40}
+    manifest = {"version": 1, "operation": "ddw-evidence-v1", "context": context, "task": task,
+                "task_sha256": context["task_sha256"], "recipient_sha256": context["recipient_sha256"]}
+    monkeypatch.setenv("DDW_SOURCE_COMMIT", "a" * 40)
+    monkeypatch.setattr(experiment, "check_policies", lambda _: ([], frozenset()))
+    summary = experiment.execute(manifest, public, tmp_path / "delivery", signing)
+    assert summary["state"] == "complete"
+    encrypted = (tmp_path / "delivery/evidence.sealed.json").read_bytes()
+    assert html.encode() not in encrypted
+    payload = delivery.unseal(delivery.authenticate(encrypted, signing_public), private, context)
+    assert payload["task"] == task
+    assert payload["receipt"]["attempt"] == 1

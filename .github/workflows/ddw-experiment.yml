@@ -44,6 +44,39 @@ jobs:
       - name: One missing-evidence assignment with encrypted delivery
         if: github.event_name == 'push' && contains(github.event.head_commit.message, '[evidence-canary-20261012]')
         run: timeout 120s python tools/ddw/evidence_experiment.py tools/ddw/evidence-task.json tools/ddw/evidence-recipient.pem ddw-artifacts/evidence --allow-network
+      - name: One centrally assigned signed detail
+        if: github.event_name == 'push' && github.run_attempt == 1 && contains(github.event.head_commit.message, '[central-ddw-20261014-127502]')
+        env:
+          DDW_SIGNING_KEY: ${{ secrets.PHDBOT_DDW_SIGNER_20261014_127502 }}
+        run: |
+          timeout 120s python - <<'PY'
+          import hashlib, json, os, sys, tempfile
+          from pathlib import Path
+          from cryptography.hazmat.primitives import serialization
+          from cryptography.hazmat.primitives.asymmetric import ed25519
+          sys.path.insert(0, 'tools/ddw')
+          from evidence_experiment import execute, read_manifest
+          os.umask(0o077)
+          signing = os.environ.pop('DDW_SIGNING_KEY', '').encode()
+          if not signing:
+              raise SystemExit('Missing dedicated assignment signer')
+          key = serialization.load_pem_private_key(signing, password=None)
+          assert isinstance(key, ed25519.Ed25519PrivateKey)
+          public = key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
+          manifest = json.loads(Path('tools/ddw/central-assignment.json').read_text())
+          assert hashlib.sha256(public).hexdigest() == manifest['signer_sha256']
+          assert manifest['context']['assignment_id'] == 'central-20261014-127502'
+          assert manifest['context']['attempt'] == 1 and len(manifest['task']['pages']) == 1
+          assert set(manifest['robots_sha256']) == set(manifest['task']['allowed_hosts']) == {'jobs.nottingham.ac.uk'}
+          manifest['context']['source_commit'] = os.environ['DDW_SOURCE_COMMIT']
+          recipient = Path('tools/ddw/central-recipient.pem')
+          with tempfile.TemporaryDirectory(prefix='ddw-assigned-') as temporary:
+              assignment = Path(temporary) / 'assignment.json'
+              assignment.write_text(json.dumps(manifest))
+              result = execute(read_manifest(assignment, recipient), recipient.read_bytes(), Path('ddw-artifacts/central'), signing)
+          assert result['state'] == 'complete', 'Incomplete result; do not retry'
+          print(json.dumps({'state': result['state'], 'pages': len(result['pages']), 'plaintext_exported': False}))
+          PY
       - name: Retain bounded public experiment evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
